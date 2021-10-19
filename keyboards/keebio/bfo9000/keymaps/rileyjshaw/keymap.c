@@ -3,21 +3,19 @@
 extern MidiDevice midi_device;
 
 enum layers {
-    _BASE = 0,
-
-    _START_OF_LAYER_GROUPS,
-    // Left hand.
-    _LH_CHROMATIC = _START_OF_LAYER_GROUPS,
+    // These layers underlie the entire keyboard as interchangeable base layers. Since other
+    // layers overlap these, they are referred to as the “left hand” layers.
+    _LH_CHROMATIC,
     _LH_MAJOR,
     _LH_MINOR,
     // _LH_DRUM,
     // _LH_GUITAR,
     // _LH_PO,
     // _LH_SEQUENCER,
-    _END_OF_LH_LAYER_GROUP,
 
+    _START_OF_LAYER_GROUPS,
     // Right hand.
-    _RH_CHROMATIC = _END_OF_LH_LAYER_GROUP,
+    _RH_CHROMATIC = _START_OF_LAYER_GROUPS,
     _RH_MAJOR,
     _RH_MINOR,
     // _RH_DRUM,
@@ -63,8 +61,7 @@ enum layers {
 //   0b00000000000000000000000000111000
 //
 // The compliment can be obtained by using the `~` operator.
-const layer_state_t LH_BITMASK = (1 << _END_OF_LH_LAYER_GROUP) - (1 << _START_OF_LAYER_GROUPS);
-const layer_state_t RH_BITMASK = (1 << _END_OF_RH_LAYER_GROUP) - (1 << _END_OF_LH_LAYER_GROUP);
+const layer_state_t RH_BITMASK = (1 << _END_OF_RH_LAYER_GROUP) - (1 << _START_OF_LAYER_GROUPS);
 const layer_state_t LC_BITMASK = (1 << _END_OF_LC_LAYER_GROUP) - (1 << _END_OF_RH_LAYER_GROUP);
 const layer_state_t RC_BITMASK = (1 << _END_OF_RC_LAYER_GROUP) - (1 << _END_OF_LC_LAYER_GROUP);
 
@@ -132,7 +129,6 @@ enum custom_keycodes {
 };
 
 void keyboard_post_init_user(void) {
-    layer_on(_LH_CHROMATIC);
     layer_on(_LC_PERFORM);
     layer_on(_COMMAND_KEY);
 
@@ -245,9 +241,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     // If a layer is out of range or is being turned off, don’t do anything fancy.
     if (changed_layer >= _START_OF_LAYER_GROUPS && changed_layer <= _END_OF_LAYER_GROUPS && IS_LAYER_ON_STATE(state, changed_layer)) {
         // Clear all other layers in the layer group.
-        if (changed_layer < _END_OF_LH_LAYER_GROUP) {
-            state &= ~LH_BITMASK;
-        } else if (changed_layer < _END_OF_RH_LAYER_GROUP) {
+        if (changed_layer < _END_OF_RH_LAYER_GROUP) {
             state &= ~RH_BITMASK;
         } else if (changed_layer < _END_OF_LC_LAYER_GROUP) {
             state &= ~LC_BITMASK;
@@ -264,10 +258,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 // TODO: Generate left and right variants dynamically at compile time instead of copy/pasting.
-// TODO: The _BASE layer feels a bit awkward and unnecessary. I think swapping “left hand” thinking with “default layer” is better.
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+/* Empty layer template for copy-pasting:
+
 //  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
-[_BASE] = LAYOUT( \
+[_LAYER_NAME] = LAYOUT( \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
@@ -275,6 +269,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
 ),
+
+*/
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  1        2        3       4        5        6       7        8       9             10       11       12       13      14       15       16       17       18
 [_LH_CHROMATIC] = LAYOUT( \
     MI_C_2,  MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  MI_F_2, MI_Fs_2, MI_G_2, MI_Gs_2,      MI_A_2,  MI_As_2, MI_B_2,  MI_C_3, MI_Cs_3, MI_D_3,  MI_Ds_3, MI_E_3,  MI_F_3, \
@@ -413,7 +410,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
     TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CC),    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
     TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_LH_CHROMATIC), TG(_LH_MAJOR),     TG(_LH_MINOR), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
+    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
     TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CC),    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
 //  1          2         3         4         5         6         7         8         9              10        11        12         13       14       15       16       17       18
