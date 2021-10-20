@@ -18,9 +18,9 @@ enum layers {
     _RH_CHROMATIC = _START_OF_LAYER_GROUPS,
     _RH_MAJOR,
     _RH_MINOR,
-    // _RH_DRUM,
+    _RH_DRUM,
+    _RH_PO,
     // _RH_GUITAR,
-    // _RH_PO,
     // _RH_SEQUENCER,
     _END_OF_RH_LAYER_GROUP,
 
@@ -108,6 +108,57 @@ enum custom_keycodes {
     // MI_Ab_6 = MI_Gs_6,
     HIGHER_OCTAVE_KEYCODES_END = MI_E_6,
 
+    NON_TRANSPOSED_KEYCODES_START,
+    MI_X_1,
+    MI_X_2,
+    MI_X_3,
+    MI_X_4,
+    MI_X_5,
+    MI_X_6,
+    MI_X_7,
+    MI_X_8,
+    MI_X_9,
+    MI_X_10,
+    MI_X_11,
+    MI_X_12,
+    MI_X_13,
+    MI_X_14,
+    MI_X_15,
+    MI_X_16,
+    MI_X_17,
+    MI_X_18,
+    MI_X_19,
+    MI_X_20,
+    MI_X_21,
+    MI_X_22,
+    MI_X_23,
+    MI_X_24,
+    MI_X_25,
+    MI_X_26,
+    MI_X_27,
+    MI_X_28,
+    MI_X_29,
+    MI_X_30,
+    MI_X_31,
+    MI_X_32,
+    MI_X_33,
+    MI_X_34,
+    MI_X_35,
+    MI_X_36,
+    MI_X_37,
+    MI_X_38,
+    MI_X_39,
+    MI_X_40,
+    MI_X_41,
+    MI_X_42,
+    MI_X_43,
+    MI_X_44,
+    MI_X_45,
+    MI_X_46,
+    MI_X_47,
+    MI_X_48,
+    NON_TRANSPOSED_KEYCODES_END = MI_X_48,
+
     // MIDI CC codes 102-119 are undefined in the spec, so we can use them
     // as general purpose controls.
     CC_KEYCODES_START,
@@ -160,6 +211,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t note_number = 0;
     uint8_t momentary_cc_number = 0;
     uint8_t toggle_cc_number = 0;
+    int8_t fixed_channel_number = -1;
 
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
@@ -168,6 +220,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
         case HIGHER_OCTAVE_KEYCODES_START ... HIGHER_OCTAVE_KEYCODES_END:
             note_number = keycode + 119 - HIGHER_OCTAVE_KEYCODES_START;
+            break;
+        case NON_TRANSPOSED_KEYCODES_START ... NON_TRANSPOSED_KEYCODES_END:
+            note_number = keycode + 82 - NON_TRANSPOSED_KEYCODES_START - 12 * midi_config.octave - midi_config.transpose;
+            fixed_channel_number = 7;  // Always send drums over MIDI Channel 8.
             break;
         case CC_KEYCODES_START ... CC_MOMENTARY_END:
             momentary_cc_number = keycode + 102 - CC_KEYCODES_START;
@@ -199,18 +255,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return true;
     }
 
+    uint8_t midi_channel = fixed_channel_number >= 0 ? fixed_channel_number : midi_config.channel;
     if (note_number) {
         if (record->event.pressed) {
-            midi_send_noteon(&midi_device, midi_config.channel, midi_compute_note(note_number), midi_config.velocity);
+            midi_send_noteon(&midi_device, midi_channel, midi_compute_note(note_number), midi_config.velocity);
         } else {
-            midi_send_noteoff(&midi_device, midi_config.channel, midi_compute_note(note_number), 0);
+            midi_send_noteoff(&midi_device, midi_channel, midi_compute_note(note_number), 0);
         }
     } else if (momentary_cc_number) {
-        midi_send_cc(&midi_device, midi_config.channel, momentary_cc_number, record->event.pressed ? 127 : 0);
+        midi_send_cc(&midi_device, midi_channel, momentary_cc_number, record->event.pressed ? 127 : 0);
     } else if (toggle_cc_number && record->event.pressed) {
-        bool toggle_state = !toggle_cc_state[midi_config.channel][toggle_cc_number - 102];
-        toggle_cc_state[midi_config.channel][toggle_cc_number - 102] = toggle_state;
-        midi_send_cc(&midi_device, midi_config.channel, toggle_cc_number, toggle_state ? 127 : 0);
+        bool toggle_state = !toggle_cc_state[midi_channel][toggle_cc_number - 102];
+        toggle_cc_state[midi_channel][toggle_cc_number - 102] = toggle_state;
+        midi_send_cc(&midi_device, midi_channel, toggle_cc_number, toggle_state ? 127 : 0);
     }
 
     return true;
@@ -243,7 +300,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 // TODO: Generate left and right variants dynamically at compile time instead of copy/pasting.
 /* Empty layer template for copy-pasting:
 
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LAYER_NAME] = LAYOUT( \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
@@ -255,7 +312,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-//  1        2        3       4        5        6       7        8       9             10       11       12       13      14       15       16       17       18
+// | 1      | 2      | 3     | 4      | 5      | 6     | 7      | 8     | 9      |||||| 10     | 11     | 12     | 13    | 14     | 15     | 16     | 17     | 18     |
 [_LH_CHROMATIC] = LAYOUT( \
     MI_C_2,  MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  MI_F_2, MI_Fs_2, MI_G_2, MI_Gs_2,      MI_A_2,  MI_As_2, MI_B_2,  MI_C_3, MI_Cs_3, MI_D_3,  MI_Ds_3, MI_E_3,  MI_F_3, \
     MI_G_1,  MI_Gs_1, MI_A_1, MI_As_1, MI_B_1,  MI_C_2, MI_Cs_2, MI_D_2, MI_Ds_2,      MI_E_2,  MI_F_2,  MI_Fs_2, MI_G_2, MI_Gs_2, MI_A_2,  MI_As_2, MI_B_2,  MI_C_3, \
@@ -264,7 +321,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_E,    MI_F,    MI_Fs,  MI_G,    MI_Gs,   MI_A,   MI_As,   MI_B,   MI_C_1,       MI_Cs_1, MI_D_1,  MI_Ds_1, MI_E_1, MI_F_1,  MI_Fs_1, MI_G_1,  MI_Gs_1, MI_A_1, \
     MI_B_N1, MI_C,    MI_Cs,  MI_D,    MI_Ds,   MI_E,   MI_F,    MI_Fs,  MI_G,         MI_Gs,   MI_A,    MI_As,   MI_B,   MI_C_1,  MI_Cs_1, MI_D_1,  MI_Ds_1, MI_E_1  \
 ),
-//  1        2        3        4        5        6        7        8        9            10      11      12      13      14      15      16      17      18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10    | 11    | 12    | 13    | 14    | 15    | 16    | 17    | 18     |
 [_LH_MAJOR] = LAYOUT( \
     MI_B_3,  MI_C_4,  MI_D_4,  MI_E_4,  MI_F_4,  MI_G_4,  MI_A_4,  MI_B_4,  MI_C_5,      MI_D_5, MI_E_5, MI_F_5, MI_G_5, MI_A_5, MI_B_5, MI_C_6, MI_D_6, MI_E_6, \
     MI_B_2,  MI_C_3,  MI_D_3,  MI_E_3,  MI_F_3,  MI_G_3,  MI_A_3,  MI_B_3,  MI_C_4,      MI_D_4, MI_E_4, MI_F_4, MI_G_4, MI_A_4, MI_B_4, MI_C_5, MI_D_5, MI_E_5, \
@@ -273,7 +330,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_B_N1, MI_C,    MI_D,    MI_E,    MI_F,    MI_G,    MI_A,    MI_B,    MI_C_1,      MI_D_1, MI_E_1, MI_F_1, MI_G_1, MI_A_1, MI_B_1, MI_C_2, MI_D_2, MI_E_2,  \
     MI_B_N2, MI_C_N1, MI_D_N1, MI_E_N1, MI_F_N1, MI_G_N1, MI_A_N1, MI_B_N1, MI_C,        MI_D,   MI_E,   MI_F,   MI_G,   MI_A,   MI_B,   MI_C_1, MI_D_1, MI_E_1  \
 ),
-//  1         2        3        4         5        6        7         8         9            10      11       12      13      14       15       16      17      18
+// | 1       | 2      | 3      | 4       | 5      | 6      | 7       | 8       | 9     |||||| 10    | 11     | 12    | 13    | 14     | 15     | 16    | 17    | 18     |
 [_LH_MINOR] = LAYOUT( \
     MI_Bb_3,  MI_C_4,  MI_D_4,  MI_Eb_4,  MI_F_4,  MI_G_4,  MI_Ab_4,  MI_Bb_4,  MI_C_5,      MI_D_5, MI_Eb_5, MI_F_5, MI_G_5, MI_Ab_5, MI_Bb_5, MI_C_6, MI_D_6, MI_Eb_6, \
     MI_Bb_2,  MI_C_3,  MI_D_3,  MI_Eb_3,  MI_F_3,  MI_G_3,  MI_Ab_3,  MI_Bb_3,  MI_C_4,      MI_D_4, MI_Eb_4, MI_F_4, MI_G_4, MI_Ab_4, MI_Bb_4, MI_C_5, MI_D_5, MI_Eb_5, \
@@ -282,7 +339,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_Bb_N1, MI_C,    MI_D,    MI_Eb,    MI_F,    MI_G,    MI_Ab,    MI_Bb,    MI_C_1,      MI_D_1, MI_Eb_1, MI_F_1, MI_G_1, MI_Ab_1, MI_Bb_1, MI_C_2, MI_D_2, MI_Eb_2, \
     MI_Bb_N2, MI_C_N1, MI_D_N1, MI_Eb_N1, MI_F_N1, MI_G_N1, MI_Ab_N1, MI_Bb_N1, MI_C,        MI_D,   MI_Eb,   MI_F,   MI_G,   MI_Ab,   MI_Bb,   MI_C_1, MI_D_1, MI_Eb_1  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11      12       13       14      15       16      17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11    | 12     | 13     | 14    | 15     | 16    | 17     | 18     |
 [_RH_CHROMATIC] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  MI_F_2, MI_Fs_2, MI_G_2, MI_Gs_2, MI_A_2,  \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Gs_1, MI_A_1, MI_As_1, MI_B_1,  MI_C_2, MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  \
@@ -291,7 +348,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_F,    MI_Fs,  MI_G,    MI_Gs,   MI_A,   MI_As,   MI_B,   MI_C_1,  MI_Cs_1, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,    MI_Cs,  MI_D,    MI_Ds,   MI_E,   MI_F,    MI_Fs,  MI_G,    MI_Gs    \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17      18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17    | 18     |
 [_RH_MAJOR] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_4,  MI_D_4,  MI_E_4,  MI_F_4,  MI_G_4,  MI_A_4,  MI_B_4,  MI_C_5, MI_D_5, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_3,  MI_D_3,  MI_E_3,  MI_F_3,  MI_G_3,  MI_A_3,  MI_B_3,  MI_C_4, MI_D_4, \
@@ -300,7 +357,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,    MI_D,    MI_E,    MI_F,    MI_G,    MI_A,    MI_B,    MI_C_1, MI_D_1, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_N1, MI_D_N1, MI_E_N1, MI_F_N1, MI_G_N1, MI_A_N1, MI_B_N1, MI_C,   MI_D    \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12        13       14       15        16        17      18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12      | 13     | 14     | 15      | 16      | 17    | 18     |
 [_RH_MINOR] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_4,  MI_D_4,  MI_Eb_4,  MI_F_4,  MI_G_4,  MI_Ab_4,  MI_Bb_4,  MI_C_5, MI_D_5, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_3,  MI_D_3,  MI_Eb_3,  MI_F_3,  MI_G_3,  MI_Ab_3,  MI_Bb_3,  MI_C_4, MI_D_4, \
@@ -309,7 +366,26 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,    MI_D,    MI_Eb,    MI_F,    MI_G,    MI_Ab,    MI_Bb,    MI_C_1, MI_D_1, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_N1, MI_D_N1, MI_Eb_N1, MI_F_N1, MI_G_N1, MI_Ab_N1, MI_Bb_N1, MI_C,   MI_D    \
 ),
-//  1         2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+[_RH_DRUM] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_41, MI_X_42, MI_X_43, MI_X_44, MI_X_45, MI_X_46, MI_X_47, MI_X_48, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_33, MI_X_34, MI_X_35, MI_X_36, MI_X_37, MI_X_38, MI_X_39, MI_X_40, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_13, MI_X_14, MI_X_15, MI_X_16, MI_X_29, MI_X_30, MI_X_31, MI_X_32, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_9,  MI_X_10, MI_X_11, MI_X_12, MI_X_25, MI_X_26, MI_X_27, MI_X_28, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_5,  MI_X_6,  MI_X_7,  MI_X_8,  MI_X_21, MI_X_22, MI_X_23, MI_X_24, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_1,  MI_X_2,  MI_X_3,  MI_X_4,  MI_X_17, MI_X_18, MI_X_19, MI_X_20, XXXXXXX  \
+),
+// TODO: Add fancy pattern change keys, etc. to unused right columns.
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+[_RH_PO] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_41, MI_X_42, MI_X_43, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_33, MI_X_34, MI_X_35, MI_X_36, MI_X_44, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_37, MI_X_38, MI_X_39, MI_X_40, MI_X_45, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_25, MI_X_26, MI_X_27, MI_X_28, MI_X_46, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_29, MI_X_30, MI_X_31, MI_X_32, MI_X_47, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+),
+// | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_PERFORM] = LAYOUT( \
     MI_LEG,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CHU,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -318,7 +394,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_BENDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_SUS,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1          2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1        | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_TRANSPOSE] = LAYOUT( \
     MI_TRNS_0, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_OCT_2,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -327,7 +403,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_OCTU,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_OCTD,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_CCS] = LAYOUT( \
     MI_CCT9, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCT8, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -336,7 +412,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_CCM8, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCM7, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_CCM] = LAYOUT( \
     MI_CCM6, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCM5, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -345,7 +421,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_CCM2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCM1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_CCT] = LAYOUT( \
     MI_CCT6, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCT5, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -354,7 +430,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_CCT2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCT1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1       2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1     | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_CHANNEL] = LAYOUT( \
     MI_CH6, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CH5, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -363,7 +439,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_CH2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CH1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_PERFORM] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_LEG,   \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHU,   \
@@ -372,7 +448,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BENDD, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_SUS    \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_TRANSPOSE] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRNS_0, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCT_2,  \
@@ -381,7 +457,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTU,   \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTD    \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_CCS] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT9, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT8, \
@@ -390,7 +466,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM8, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM7  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_CCM] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM6, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM5, \
@@ -399,7 +475,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM2, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM1  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_CCT] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT6, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT5, \
@@ -408,7 +484,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT2, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT1  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_CHANNEL] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH6, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH5, \
@@ -417,7 +493,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH2, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH1  \
 ),
-//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_QWERTY] = LAYOUT( \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY), \
     XXXXXXX, XXXXXXX, XXXXXXX, KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,         KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, XXXXXXX, XXXXXXX, XXXXXXX,     \
@@ -426,7 +502,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, XXXXXXX, XXXXXXX, KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT, XXXXXXX, KC_UP,   XXXXXXX,     \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_BSPC, KC_BSPC,      KC_SPC,  KC_SPC,  KC_ENT,  XXXXXXX, XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT      \
 ),
-//  1             2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+// | 1           | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_COMMAND_KEY] = LAYOUT( \
     TG(_COMMAND), _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -435,16 +511,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1                  2                  3              4            5            6                7        8        9             10       11       12       13       14       15       16       17       18
+// | 1                | 2                | 3            | 4           | 5          | 6              | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_COMMAND] = LAYOUT( \
-    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,     XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,     XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM), TG(_RC_CCT), TG(_RC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), XXXXXXX,     XXXXXXX,  XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,     XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
-    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM), TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
+    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),  TG(_RC_CCT), TG(_RC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM), TG(_RH_PO),  XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
+    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),  TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
-//  1          2         3         4         5         6         7         8         9              10        11        12         13       14       15       16       17       18
+// | 1        | 2       | 3       | 4       | 5       | 6       | 7       | 8       | 9       |||||| 10      | 11      | 12       | 13     | 14     | 15     | 16     | 17     | 18     |
 [_CONTROL] = LAYOUT( \
     _______,   MI_CH1,   MI_CH2,   MI_CH3,   MI_CH4,   MI_CH5,   MI_CH6,   MI_CH7,   MI_CH8,        MI_CH9,   MI_CH10,  MI_CH11,   MI_CH12, MI_CH13, MI_CH14, MI_CH15, MI_CH16, XXXXXXX, \
     MI_TRNS_0, MI_VEL_0, MI_VEL_1, MI_VEL_2, MI_VEL_3, MI_VEL_4, MI_VEL_5, MI_VEL_6, MI_VEL_7,      MI_VEL_8, MI_VEL_9, MI_VEL_10, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
