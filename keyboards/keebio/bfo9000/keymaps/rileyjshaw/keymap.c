@@ -27,27 +27,24 @@ enum layers {
     // Left column.
     _LC_PERFORM = _END_OF_RH_LAYER_GROUP,
     _LC_TRANSPOSE,
-    _LC_CC,
-    // _LC_CHANNEL_A,
-    // _LC_CHANNEL_B,
-    // _LC_CHANNEL_C,
+    _LC_CCS,
+    _LC_CCM,
+    _LC_CCT,
+    _LC_CHANNEL,
     _END_OF_LC_LAYER_GROUP,
 
     // Right column.
     _RC_PERFORM = _END_OF_LC_LAYER_GROUP,
     _RC_TRANSPOSE,
-    _RC_CC,
-    // _RC_CHANNEL_A,
-    // _RC_CHANNEL_B,
-    // _RC_CHANNEL_C,
+    _RC_CCS,
+    _RC_CCM,
+    _RC_CCT,
+    _RC_CHANNEL,
     _END_OF_RC_LAYER_GROUP,
     _END_OF_LAYER_GROUPS = _END_OF_RC_LAYER_GROUP,
 
-    // Multiple columns.
-    _BLANK = _END_OF_LAYER_GROUPS,
-
     // Other.
-    _QWERTY,
+    _QWERTY = _END_OF_LAYER_GROUPS,
 
     // Command layer.
     _COMMAND_KEY,
@@ -61,9 +58,9 @@ enum layers {
 //   0b00000000000000000000000000111000
 //
 // The compliment can be obtained by using the `~` operator.
-const layer_state_t RH_BITMASK = (1 << _END_OF_RH_LAYER_GROUP) - (1 << _START_OF_LAYER_GROUPS);
-const layer_state_t LC_BITMASK = (1 << _END_OF_LC_LAYER_GROUP) - (1 << _END_OF_RH_LAYER_GROUP);
-const layer_state_t RC_BITMASK = (1 << _END_OF_RC_LAYER_GROUP) - (1 << _END_OF_LC_LAYER_GROUP);
+const layer_state_t RH_BITMASK = (1UL << _END_OF_RH_LAYER_GROUP) - (1UL << _START_OF_LAYER_GROUPS);
+const layer_state_t LC_BITMASK = (1UL << _END_OF_LC_LAYER_GROUP) - (1UL << _END_OF_RH_LAYER_GROUP);
+const layer_state_t RC_BITMASK = (1UL << _END_OF_RC_LAYER_GROUP) - (1UL << _END_OF_LC_LAYER_GROUP);
 
 // Sequencer resolution and tempo defaults.
 #define _SQ_RES_INIT 6  // SQ_RES_8, twice per beat.
@@ -93,6 +90,7 @@ enum custom_keycodes {
     MI_As_N1,
     MI_Bb_N1 = MI_As_N1,
     MI_B_N1,
+    LOWER_OCTAVE_KEYCODES_END = MI_B_N1,
 
     HIGHER_OCTAVE_KEYCODES_START,
     MI_C_6 = HIGHER_OCTAVE_KEYCODES_START,
@@ -108,6 +106,7 @@ enum custom_keycodes {
     // MI_G_6,
     // MI_Gs_6,
     // MI_Ab_6 = MI_Gs_6,
+    HIGHER_OCTAVE_KEYCODES_END = MI_E_6,
 
     // MIDI CC codes 102-119 are undefined in the spec, so we can use them
     // as general purpose controls.
@@ -116,10 +115,25 @@ enum custom_keycodes {
     MI_CCM1 = CC_KEYCODES_START,
     MI_CCM2,
     MI_CCM3,
-    // Toggle.
-    MI_CCT1,
+    MI_CCM4,
+    MI_CCM5,
+    MI_CCM6,
+    MI_CCM7,
+    MI_CCM8,
+    MI_CCM9,
+    CC_MOMENTARY_END = MI_CCM9,
+
+    CC_TOGGLE_START,
+    MI_CCT1 = CC_TOGGLE_START,
     MI_CCT2,
     MI_CCT3,
+    MI_CCT4,
+    MI_CCT5,
+    MI_CCT6,
+    MI_CCT7,
+    MI_CCT8,
+    MI_CCT9,
+    CC_KEYCODES_END = MI_CCT9,
 
     SEQUENCER_KEYCODES_START,
     SQ_TCLR = SEQUENCER_KEYCODES_START,
@@ -135,17 +149,12 @@ void keyboard_post_init_user(void) {
     sequencer_set_tempo(_SQ_TMP_2);
     sequencer_set_resolution(_SQ_RES_INIT);
 
-    sequencer_config.track_notes[0] = MI_C_2;
-    sequencer_config.track_notes[1] = MI_Cs_2;
-    sequencer_config.track_notes[2] = MI_D_2;
-    sequencer_config.track_notes[3] = MI_Ds_2;
-    sequencer_config.track_notes[4] = MI_E_2;
-    sequencer_config.track_notes[5] = MI_F_2;
-    sequencer_config.track_notes[6] = MI_Fs_2;
-    sequencer_config.track_notes[7] = MI_G_2;
+    for (uint8_t i = 0; i < 8; ++i) {
+        sequencer_config.track_notes[i] = MI_C_2 + i;
+    }
 }
 
-bool toggle_cc_state[3] = { false };
+bool toggle_cc_state[16][CC_KEYCODES_END + 1 - CC_TOGGLE_START] = { false };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t note_number = 0;
@@ -154,41 +163,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
-        case MI_As_N2:
-        case MI_B_N2:
-        case MI_C_N1:
-        case MI_Cs_N1:
-        case MI_D_N1:
-        case MI_Ds_N1:
-        case MI_E_N1:
-        case MI_F_N1:
-        case MI_Fs_N1:
-        case MI_G_N1:
-        case MI_Gs_N1:
-        case MI_A_N1:
-        case MI_As_N1:
-        case MI_B_N1:
+        case LOWER_OCTAVE_KEYCODES_START ... LOWER_OCTAVE_KEYCODES_END:
             note_number = keycode + 33 - LOWER_OCTAVE_KEYCODES_START;
             break;
-        case MI_C_6:
-        case MI_Cs_6:
-        case MI_D_6:
-        case MI_Ds_6:
-        case MI_E_6:
-        // case MI_F_6:
-        // case MI_Fs_6:
-        // case MI_G_6:
-        // case MI_Gs_6:
+        case HIGHER_OCTAVE_KEYCODES_START ... HIGHER_OCTAVE_KEYCODES_END:
             note_number = keycode + 119 - HIGHER_OCTAVE_KEYCODES_START;
             break;
-        case MI_CCM1:
-        case MI_CCM2:
-        case MI_CCM3:
+        case CC_KEYCODES_START ... CC_MOMENTARY_END:
             momentary_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
-        case MI_CCT1:
-        case MI_CCT2:
-        case MI_CCT3:
+        case CC_TOGGLE_START ... CC_KEYCODES_END:
             toggle_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
 
@@ -221,13 +205,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } else {
             midi_send_noteoff(&midi_device, midi_config.channel, midi_compute_note(note_number), 0);
         }
-    // CC messages always send on Channel 1.
     } else if (momentary_cc_number) {
-        midi_send_cc(&midi_device, 0, momentary_cc_number, record->event.pressed ? 127 : 0);
+        midi_send_cc(&midi_device, midi_config.channel, momentary_cc_number, record->event.pressed ? 127 : 0);
     } else if (toggle_cc_number && record->event.pressed) {
-        bool toggle_state = !toggle_cc_state[toggle_cc_number - 102];
-        toggle_cc_state[toggle_cc_number - 102] = toggle_state;
-        midi_send_cc(&midi_device, 0, toggle_cc_number, toggle_state ? 127 : 0);
+        bool toggle_state = !toggle_cc_state[midi_config.channel][toggle_cc_number - 102];
+        toggle_cc_state[midi_config.channel][toggle_cc_number - 102] = toggle_state;
+        midi_send_cc(&midi_device, midi_config.channel, toggle_cc_number, toggle_state ? 127 : 0);
     }
 
     return true;
@@ -334,7 +317,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_BENDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_BENDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_SUS,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
-
 ),
 //  1          2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
 [_LC_TRANSPOSE] = LAYOUT( \
@@ -344,17 +326,42 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_TRNSD,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_OCTU,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_OCTD,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
-
 ),
 //  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
-[_LC_CC] = LAYOUT( \
-    MI_CCT3, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_CCT2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_CCT1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+[_LC_CCS] = LAYOUT( \
+    MI_CCT9, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT8, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT7, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCM9, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCM8, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCM7, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+),
+//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+[_LC_CCM] = LAYOUT( \
+    MI_CCM6, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCM5, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCM4, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCM3, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCM2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CCM1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
-
+),
+//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+[_LC_CCT] = LAYOUT( \
+    MI_CCT6, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT5, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT4, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT3, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CCT1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+),
+//  1       2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+[_LC_CHANNEL] = LAYOUT( \
+    MI_CH6, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CH5, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CH4, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CH3, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CH2, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CH1, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
 //  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
 [_RC_PERFORM] = LAYOUT( \
@@ -364,7 +371,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BENDU, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BENDD, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_SUS    \
-
 ),
 //  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
 [_RC_TRANSPOSE] = LAYOUT( \
@@ -374,17 +380,42 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRNSD,  \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTU,   \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTD    \
-
 ),
 //  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
-[_RC_CC] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT3, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT2, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT1, \
+[_RC_CCS] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT9, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT8, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT7, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM9, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM8, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM7  \
+),
+//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+[_RC_CCM] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM6, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM5, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM4, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM3, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM2, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCM1  \
-
+),
+//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+[_RC_CCT] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT6, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT5, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT4, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT3, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT2, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT1  \
+),
+//  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+[_RC_CHANNEL] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH6, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH5, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH4, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH3, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH2, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH1  \
 ),
 //  1        2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
 [_QWERTY] = LAYOUT( \
@@ -397,21 +428,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 //  1             2        3        4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
 [_COMMAND_KEY] = LAYOUT( \
-    MO(_COMMAND), _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    TG(_COMMAND), _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-//  1                  2                  3              4        5        6        7        8        9             10       11       12       13       14       15       16       17       18
+//  1                  2                  3              4            5            6                7        8        9             10       11       12       13       14       15       16       17       18
 [_COMMAND] = LAYOUT( \
-    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CC),    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
-    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CC),    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
+    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,     XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,     XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM), TG(_RC_CCT), TG(_RC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), XXXXXXX,     XXXXXXX,  XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,     XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
+    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM), TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
 //  1          2         3         4         5         6         7         8         9              10        11        12         13       14       15       16       17       18
 [_CONTROL] = LAYOUT( \

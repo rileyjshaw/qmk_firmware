@@ -13,7 +13,7 @@
 #define PRODUCT MIDI Grid
 
 #undef DESCRIPTION
-#define DESCRIPTION An isomorphic / orthogonal MIDI controller
+#define DESCRIPTION An isomorphic / orthogonal MIDI keyboard
 
 #define MIDI_BASIC
 #define MIDI_ADVANCED
@@ -22,3 +22,8 @@
 #define SEQUENCER_STEPS 32
 
 #define USB_MAX_POWER_CONSUMPTION 100
+
+// Save some firmware space by turning off unused features.
+#define NO_ACTION_TAPPING
+#define NO_ACTION_MACRO
+#define NO_ACTION_FUNCTION
