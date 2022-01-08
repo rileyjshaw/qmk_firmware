@@ -108,24 +108,27 @@ enum custom_keycodes {
     // MI_Ab_6 = MI_Gs_6,
     HIGHER_OCTAVE_KEYCODES_END = MI_E_6,
 
+    NON_TRANSPOSED_CHANNEL_KEYCODES_START,
+    MX_CH1 = NON_TRANSPOSED_CHANNEL_KEYCODES_START,
+    MX_CH2,
+    MX_CH3,
+    MX_CH4,
+    MX_CH5,
+    MX_CH6,
+    MX_CH7,
+    MX_CH8,
+    MX_CH9,
+    MX_CH10,
+    MX_CH11,
+    MX_CH12,
+    MX_CH13,
+    MX_CH14,
+    MX_CH15,
+    MX_CH16,
+    NON_TRANSPOSED_CHANNEL_KEYCODES_END = MX_CH16,
+
     NON_TRANSPOSED_KEYCODES_START,
-    MI_X_1,
-    MI_X_2,
-    MI_X_3,
-    MI_X_4,
-    MI_X_5,
-    MI_X_6,
-    MI_X_7,
-    MI_X_8,
-    MI_X_9,
-    MI_X_10,
-    MI_X_11,
-    MI_X_12,
-    MI_X_13,
-    MI_X_14,
-    MI_X_15,
-    MI_X_16,
-    MI_X_17,
+    MI_X_17 = NON_TRANSPOSED_KEYCODES_START,
     MI_X_18,
     MI_X_19,
     MI_X_20,
@@ -174,8 +177,8 @@ enum custom_keycodes {
     MI_CCM9,
     CC_MOMENTARY_END = MI_CCM9,
 
-    CC_TOGGLE_START,
-    MI_CCT1 = CC_TOGGLE_START,
+    CC_TOGGLE_KEYCODES_START,
+    MI_CCT1 = CC_TOGGLE_KEYCODES_START,
     MI_CCT2,
     MI_CCT3,
     MI_CCT4,
@@ -205,13 +208,14 @@ void keyboard_post_init_user(void) {
     }
 }
 
-bool toggle_cc_state[16][CC_KEYCODES_END + 1 - CC_TOGGLE_START] = { false };
+bool toggle_cc_state[16][CC_KEYCODES_END + 1 - CC_TOGGLE_KEYCODES_START] = { false };
+int8_t non_transposed_channel = 7; // Send drums over MIDI Channel 8 by default.
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t note_number = 0;
     uint8_t momentary_cc_number = 0;
     uint8_t toggle_cc_number = 0;
-    int8_t fixed_channel_number = -1;
+    uint8_t fixed_channel_number = 100;  // Invalid, so we ignore it unless its set.
 
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
@@ -221,14 +225,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case HIGHER_OCTAVE_KEYCODES_START ... HIGHER_OCTAVE_KEYCODES_END:
             note_number = keycode + 119 - HIGHER_OCTAVE_KEYCODES_START;
             break;
+        case NON_TRANSPOSED_CHANNEL_KEYCODES_START ... NON_TRANSPOSED_CHANNEL_KEYCODES_END:
+            non_transposed_channel = keycode - NON_TRANSPOSED_CHANNEL_KEYCODES_START;
+            break;
         case NON_TRANSPOSED_KEYCODES_START ... NON_TRANSPOSED_KEYCODES_END:
-            note_number = keycode + 82 - NON_TRANSPOSED_KEYCODES_START - 12 * midi_config.octave - midi_config.transpose;
-            fixed_channel_number = 7;  // Always send drums over MIDI Channel 8.
+            note_number = keycode + 98 - NON_TRANSPOSED_KEYCODES_START - 12 * midi_config.octave - midi_config.transpose;
+            fixed_channel_number = non_transposed_channel;
             break;
         case CC_KEYCODES_START ... CC_MOMENTARY_END:
             momentary_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
-        case CC_TOGGLE_START ... CC_KEYCODES_END:
+        case CC_TOGGLE_KEYCODES_START ... CC_KEYCODES_END:
             toggle_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
 
@@ -255,7 +262,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return true;
     }
 
-    uint8_t midi_channel = fixed_channel_number >= 0 ? fixed_channel_number : midi_config.channel;
+    uint8_t midi_channel = fixed_channel_number < 16 ? fixed_channel_number : midi_config.channel;
     if (note_number) {
         if (record->event.pressed) {
             midi_send_noteon(&midi_device, midi_channel, midi_compute_note(note_number), midi_config.velocity);
@@ -368,12 +375,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RH_DRUM] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_41, MI_X_42, MI_X_43, MI_X_44, MI_X_45, MI_X_46, MI_X_47, MI_X_48, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_33, MI_X_34, MI_X_35, MI_X_36, MI_X_37, MI_X_38, MI_X_39, MI_X_40, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_13, MI_X_14, MI_X_15, MI_X_16, MI_X_29, MI_X_30, MI_X_31, MI_X_32, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_9,  MI_X_10, MI_X_11, MI_X_12, MI_X_25, MI_X_26, MI_X_27, MI_X_28, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_5,  MI_X_6,  MI_X_7,  MI_X_8,  MI_X_21, MI_X_22, MI_X_23, MI_X_24, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_1,  MI_X_2,  MI_X_3,  MI_X_4,  MI_X_17, MI_X_18, MI_X_19, MI_X_20, XXXXXXX  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MX_CH1,  MX_CH2,  MX_CH3,  MX_CH4,  MX_CH5,  MX_CH6,  MX_CH7,  MX_CH8,  XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MX_CH9,  MX_CH10, MX_CH11, MX_CH12, MX_CH13, MX_CH14, MX_CH15, MX_CH16, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_29, MI_X_30, MI_X_31, MI_X_32, MI_X_45, MI_X_46, MI_X_47, MI_X_48, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_25, MI_X_26, MI_X_27, MI_X_28, MI_X_41, MI_X_42, MI_X_43, MI_X_44, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_21, MI_X_22, MI_X_23, MI_X_24, MI_X_37, MI_X_38, MI_X_39, MI_X_40, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_17, MI_X_18, MI_X_19, MI_X_20, MI_X_33, MI_X_34, MI_X_35, MI_X_36, XXXXXXX  \
 ),
 // TODO: Add fancy pattern change keys, etc. to unused right columns.
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
