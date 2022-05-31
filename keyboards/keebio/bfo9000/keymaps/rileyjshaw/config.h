@@ -7,10 +7,10 @@
 // #define EE_HANDS
 
 #undef MANUFACTURER
-#define MANUFACTURER Orchid
+#define MANUFACTURER Misery & Co.
 
 #undef PRODUCT
-#define PRODUCT MIDI Grid
+#define PRODUCT Stargazer
 
 #undef DESCRIPTION
 #define DESCRIPTION An isomorphic / orthogonal MIDI keyboard
