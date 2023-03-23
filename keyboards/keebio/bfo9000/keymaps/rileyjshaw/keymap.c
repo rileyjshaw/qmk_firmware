@@ -40,6 +40,7 @@ enum layers {
     _RC_CCM,
     _RC_CCT,
     _RC_CHANNEL,
+    _RC_EXPLORE,
     _END_OF_RC_LAYER_GROUP,
     _END_OF_LAYER_GROUPS = _END_OF_RC_LAYER_GROUP,
 
@@ -175,7 +176,7 @@ enum custom_keycodes {
     MI_CCM7,
     MI_CCM8,
     MI_CCM9,
-    CC_MOMENTARY_END = MI_CCM9,
+    CC_MOMENTARY_KEYCODES_END = MI_CCM9,
 
     CC_TOGGLE_KEYCODES_START,
     MI_CCT1 = CC_TOGGLE_KEYCODES_START,
@@ -188,6 +189,12 @@ enum custom_keycodes {
     MI_CCT8,
     MI_CCT9,
     CC_KEYCODES_END = MI_CCT9,
+
+    PC_KEYCODES_START,
+    MI_PC0 = PC_KEYCODES_START,
+    MI_PCU,
+    MI_PCD,
+    PC_KEYCODES_END = MI_PCD,
 
     SEQUENCER_KEYCODES_START,
     SQ_TCLR = SEQUENCER_KEYCODES_START,
@@ -210,12 +217,14 @@ void keyboard_post_init_user(void) {
 
 bool toggle_cc_state[16][CC_KEYCODES_END + 1 - CC_TOGGLE_KEYCODES_START] = { false };
 int8_t non_transposed_channel = 7; // Send drums over MIDI Channel 8 by default.
+uint8_t pc_number = 0;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t note_number = 0;
     uint8_t momentary_cc_number = 0;
     uint8_t toggle_cc_number = 0;
     uint8_t fixed_channel_number = 100;  // Invalid, so we ignore it unless its set.
+    bool is_pc = 0;
 
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
@@ -232,13 +241,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             note_number = keycode + 98 - NON_TRANSPOSED_KEYCODES_START - 12 * midi_config.octave - midi_config.transpose;
             fixed_channel_number = non_transposed_channel;
             break;
-        case CC_KEYCODES_START ... CC_MOMENTARY_END:
+        case CC_KEYCODES_START ... CC_MOMENTARY_KEYCODES_END:
             momentary_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
         case CC_TOGGLE_KEYCODES_START ... CC_KEYCODES_END:
             toggle_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
-
+        case PC_KEYCODES_START ... PC_KEYCODES_END:
+            if (record->event.pressed) {
+                is_pc = true;
+                if (keycode == MI_PC0 && pc_number != 0) {
+                    pc_number = 0;
+                } else if (keycode == MI_PCU && pc_number < 127) {
+                    pc_number++;
+                } else if (keycode == MI_PCD && pc_number > 0) {
+                    pc_number--;
+                } else {
+                    is_pc = false;
+                }
+            }
+            break;
         // Deactivate all sequencer tracks.
         case SQ_TCLR:
             // A bit of a hack – ensure Track 0 is active, then call a function
@@ -246,7 +268,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             sequencer_activate_track(0);
             sequencer_toggle_single_active_track(0);
             break;
-
         // Set sequencer tempo to a preset value.
         case SQ_TMP1:
             sequencer_set_tempo(_SQ_TMP_1);
@@ -257,7 +278,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case SQ_TMP3:
             sequencer_set_tempo(_SQ_TMP_3);
     /*Amen*/break;
-
         default:
             return true;
     }
@@ -275,6 +295,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         bool toggle_state = !toggle_cc_state[midi_channel][toggle_cc_number - 102];
         toggle_cc_state[midi_channel][toggle_cc_number - 102] = toggle_state;
         midi_send_cc(&midi_device, midi_channel, toggle_cc_number, toggle_state ? 127 : 0);
+    } else if (is_pc) {
+        midi_send_programchange(&midi_device, midi_channel, pc_number);
     }
 
     return true;
@@ -491,7 +513,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT2, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CCT1  \
 ),
-// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18    |
 [_RC_CHANNEL] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH6, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH5, \
@@ -501,6 +523,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH1  \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+[_RC_EXPLORE] = LAYOUT( \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH1,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHNU, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHND, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_PC0,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_PCU,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_PCD   \
+),
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18         |
 [_QWERTY] = LAYOUT( \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY), \
     XXXXXXX, XXXXXXX, XXXXXXX, KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,         KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, XXXXXXX, XXXXXXX, XXXXXXX,     \
@@ -518,22 +549,22 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-// | 1                | 2                | 3            | 4           | 5          | 6              | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
+// | 1                | 2                | 3            | 4           | 5          | 6              | 7              | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
 [_COMMAND] = LAYOUT( \
-    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),  TG(_RC_CCT), TG(_RC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM), TG(_RH_PO),  XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
-    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),  TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
+    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),  TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM), TG(_RH_PO),  XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
+    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),  TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_CONTROL] = LAYOUT( \
     _______, MI_CH1,  MI_CH2,  MI_CH3,  MI_CH4,  MI_CH5,  MI_CH6,  MI_CH7,  MI_CH8,       MI_CH9,  MI_CH10, MI_CH11, MI_CH12, MI_CH13, MI_CH14, MI_CH15, MI_CH16, XXXXXXX, \
-    MI_TR0,  MI_VL0,  MI_VL1,  MI_VL2,  MI_VL3,  MI_VL4,  MI_VL5,  MI_VL6,  MI_VL7,       MI_VL8,  MI_VL9,  MI_VL10, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_PC0,  MI_VL0,  MI_VL1,  MI_VL2,  MI_VL3,  MI_VL4,  MI_VL5,  MI_VL6,  MI_VL7,       MI_VL8,  MI_VL9,  MI_VL10, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_CH1,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_OC2,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     MI_TR0,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    MI_OC2,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    MI_OC2,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     MI_AOFF, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
 )
 };
