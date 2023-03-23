@@ -70,43 +70,43 @@ const layer_state_t RC_BITMASK = (1UL << _END_OF_RC_LAYER_GROUP) - (1UL << _END_
 
 enum custom_keycodes {
     LOWER_OCTAVE_KEYCODES_START = SAFE_RANGE,
-    MI_As_N2 = LOWER_OCTAVE_KEYCODES_START,
-    MI_Bb_N2 = MI_As_N2,
-    MI_B_N2,
-    MI_C_N1,
-    MI_Cs_N1,
-    MI_Db_N1 = MI_Cs_N1,
-    MI_D_N1,
-    MI_Ds_N1,
-    MI_Eb_N1 = MI_Ds_N1,
-    MI_E_N1,
-    MI_F_N1,
-    MI_Fs_N1,
-    MI_Gb_N1 = MI_Fs_N1,
-    MI_G_N1,
-    MI_Gs_N1,
-    MI_Ab_N1 = MI_Gs_N1,
-    MI_A_N1,
-    MI_As_N1,
-    MI_Bb_N1 = MI_As_N1,
-    MI_B_N1,
-    LOWER_OCTAVE_KEYCODES_END = MI_B_N1,
+    MI_AsN2 = LOWER_OCTAVE_KEYCODES_START,
+    MI_BbN2 = MI_AsN2,
+    MI_BN2,
+    MI_CN1,
+    MI_CsN1,
+    MI_DbN1 = MI_CsN1,
+    MI_DN1,
+    MI_DsN1,
+    MI_EbN1 = MI_DsN1,
+    MI_EN1,
+    MI_FN1,
+    MI_FsN1,
+    MI_GbN1 = MI_FsN1,
+    MI_GN1,
+    MI_GsN1,
+    MI_AbN1 = MI_GsN1,
+    MI_AN1,
+    MI_AsN1,
+    MI_BbN1 = MI_AsN1,
+    MI_BN1,
+    LOWER_OCTAVE_KEYCODES_END = MI_BN1,
 
     HIGHER_OCTAVE_KEYCODES_START,
-    MI_C_6 = HIGHER_OCTAVE_KEYCODES_START,
-    MI_Cs_6,
-    MI_Db_6 = MI_Cs_6,
-    MI_D_6,
-    MI_Ds_6,
-    MI_Eb_6 = MI_Ds_6,
-    MI_E_6,
-    // MI_F_6,
-    // MI_Fs_6,
-    // MI_Gb_6 = MI_Fs_6,
-    // MI_G_6,
-    // MI_Gs_6,
-    // MI_Ab_6 = MI_Gs_6,
-    HIGHER_OCTAVE_KEYCODES_END = MI_E_6,
+    MI_C6 = HIGHER_OCTAVE_KEYCODES_START,
+    MI_Cs6,
+    MI_Db6 = MI_Cs6,
+    MI_D6,
+    MI_Ds6,
+    MI_Eb6 = MI_Ds6,
+    MI_E6,
+    // MI_F6,
+    // MI_Fs6,
+    // MI_Gb6 = MI_Fs6,
+    // MI_G6,
+    // MI_Gs6,
+    // MI_Ab6 = MI_Gs6,
+    HIGHER_OCTAVE_KEYCODES_END = MI_E6,
 
     NON_TRANSPOSED_CHANNEL_KEYCODES_START,
     MX_CH1 = NON_TRANSPOSED_CHANNEL_KEYCODES_START,
@@ -128,39 +128,39 @@ enum custom_keycodes {
     NON_TRANSPOSED_CHANNEL_KEYCODES_END = MX_CH16,
 
     NON_TRANSPOSED_KEYCODES_START,
-    MI_X_17 = NON_TRANSPOSED_KEYCODES_START,
-    MI_X_18,
-    MI_X_19,
-    MI_X_20,
-    MI_X_21,
-    MI_X_22,
-    MI_X_23,
-    MI_X_24,
-    MI_X_25,
-    MI_X_26,
-    MI_X_27,
-    MI_X_28,
-    MI_X_29,
-    MI_X_30,
-    MI_X_31,
-    MI_X_32,
-    MI_X_33,
-    MI_X_34,
-    MI_X_35,
-    MI_X_36,
-    MI_X_37,
-    MI_X_38,
-    MI_X_39,
-    MI_X_40,
-    MI_X_41,
-    MI_X_42,
-    MI_X_43,
-    MI_X_44,
-    MI_X_45,
-    MI_X_46,
-    MI_X_47,
-    MI_X_48,
-    NON_TRANSPOSED_KEYCODES_END = MI_X_48,
+    MI_X17 = NON_TRANSPOSED_KEYCODES_START,
+    MI_X18,
+    MI_X19,
+    MI_X20,
+    MI_X21,
+    MI_X22,
+    MI_X23,
+    MI_X24,
+    MI_X25,
+    MI_X26,
+    MI_X27,
+    MI_X28,
+    MI_X29,
+    MI_X30,
+    MI_X31,
+    MI_X32,
+    MI_X33,
+    MI_X34,
+    MI_X35,
+    MI_X36,
+    MI_X37,
+    MI_X38,
+    MI_X39,
+    MI_X40,
+    MI_X41,
+    MI_X42,
+    MI_X43,
+    MI_X44,
+    MI_X45,
+    MI_X46,
+    MI_X47,
+    MI_X48,
+    NON_TRANSPOSED_KEYCODES_END = MI_X48,
 
     // MIDI CC codes 102-119 are undefined in the spec, so we can use them
     // as general purpose controls.
@@ -204,7 +204,7 @@ void keyboard_post_init_user(void) {
     sequencer_set_resolution(_SQ_RES_INIT);
 
     for (uint8_t i = 0; i < 8; ++i) {
-        sequencer_config.track_notes[i] = MI_C_2 + i;
+        sequencer_config.track_notes[i] = MI_C2 + i;
     }
 }
 
@@ -319,96 +319,96 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-// | 1      | 2      | 3     | 4      | 5      | 6     | 7      | 8     | 9      |||||| 10     | 11     | 12     | 13    | 14     | 15     | 16     | 17     | 18     |
+// | 1     | 2     | 3    | 4     | 5     | 6    | 7     | 8    | 9     |||||| 10    | 11    | 12    | 13   | 14    | 15    | 16    | 17    | 18   |
 [_LH_CHROMATIC] = LAYOUT( \
-    MI_C_2,  MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  MI_F_2, MI_Fs_2, MI_G_2, MI_Gs_2,      MI_A_2,  MI_As_2, MI_B_2,  MI_C_3, MI_Cs_3, MI_D_3,  MI_Ds_3, MI_E_3,  MI_F_3, \
-    MI_G_1,  MI_Gs_1, MI_A_1, MI_As_1, MI_B_1,  MI_C_2, MI_Cs_2, MI_D_2, MI_Ds_2,      MI_E_2,  MI_F_2,  MI_Fs_2, MI_G_2, MI_Gs_2, MI_A_2,  MI_As_2, MI_B_2,  MI_C_3, \
-    MI_D_1,  MI_Ds_1, MI_E_1, MI_F_1,  MI_Fs_1, MI_G_1, MI_Gs_1, MI_A_1, MI_As_1,      MI_B_1,  MI_C_2,  MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  MI_F_2,  MI_Fs_2, MI_G_2, \
-    MI_A,    MI_As,   MI_B,   MI_C_1,  MI_Cs_1, MI_D_1, MI_Ds_1, MI_E_1, MI_F_1,       MI_Fs_1, MI_G_1,  MI_Gs_1, MI_A_1, MI_As_1, MI_B_1,  MI_C_2,  MI_Cs_2, MI_D_2, \
-    MI_E,    MI_F,    MI_Fs,  MI_G,    MI_Gs,   MI_A,   MI_As,   MI_B,   MI_C_1,       MI_Cs_1, MI_D_1,  MI_Ds_1, MI_E_1, MI_F_1,  MI_Fs_1, MI_G_1,  MI_Gs_1, MI_A_1, \
-    MI_B_N1, MI_C,    MI_Cs,  MI_D,    MI_Ds,   MI_E,   MI_F,    MI_Fs,  MI_G,         MI_Gs,   MI_A,    MI_As,   MI_B,   MI_C_1,  MI_Cs_1, MI_D_1,  MI_Ds_1, MI_E_1  \
+    MI_C2,  MI_Cs2, MI_D2, MI_Ds2, MI_E2,  MI_F2, MI_Fs2, MI_G2, MI_Gs2,      MI_A2,  MI_As2, MI_B2,  MI_C3, MI_Cs3, MI_D3,  MI_Ds3, MI_E3,  MI_F3, \
+    MI_G1,  MI_Gs1, MI_A1, MI_As1, MI_B1,  MI_C2, MI_Cs2, MI_D2, MI_Ds2,      MI_E2,  MI_F2,  MI_Fs2, MI_G2, MI_Gs2, MI_A2,  MI_As2, MI_B2,  MI_C3, \
+    MI_D1,  MI_Ds1, MI_E1, MI_F1,  MI_Fs1, MI_G1, MI_Gs1, MI_A1, MI_As1,      MI_B1,  MI_C2,  MI_Cs2, MI_D2, MI_Ds2, MI_E2,  MI_F2,  MI_Fs2, MI_G2, \
+    MI_A,   MI_As,  MI_B,  MI_C1,  MI_Cs1, MI_D1, MI_Ds1, MI_E1, MI_F1,       MI_Fs1, MI_G1,  MI_Gs1, MI_A1, MI_As1, MI_B1,  MI_C2,  MI_Cs2, MI_D2, \
+    MI_E,   MI_F,   MI_Fs, MI_G,   MI_Gs,  MI_A,  MI_As,  MI_B,  MI_C1,       MI_Cs1, MI_D1,  MI_Ds1, MI_E1, MI_F1,  MI_Fs1, MI_G1,  MI_Gs1, MI_A1, \
+    MI_BN1, MI_C,   MI_Cs, MI_D,   MI_Ds,  MI_E,  MI_F,   MI_Fs, MI_G,        MI_Gs,  MI_A,   MI_As,  MI_B,  MI_C1,  MI_Cs1, MI_D1,  MI_Ds1, MI_E1  \
 ),
-// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10    | 11    | 12    | 13    | 14    | 15    | 16    | 17    | 18     |
+// | 1     | 2     | 3     | 4     | 5     | 6     | 7     | 8     | 9    |||||| 10   | 11   | 12   | 13   | 14   | 15   | 16   | 17   | 18   |
 [_LH_MAJOR] = LAYOUT( \
-    MI_B_3,  MI_C_4,  MI_D_4,  MI_E_4,  MI_F_4,  MI_G_4,  MI_A_4,  MI_B_4,  MI_C_5,      MI_D_5, MI_E_5, MI_F_5, MI_G_5, MI_A_5, MI_B_5, MI_C_6, MI_D_6, MI_E_6, \
-    MI_B_2,  MI_C_3,  MI_D_3,  MI_E_3,  MI_F_3,  MI_G_3,  MI_A_3,  MI_B_3,  MI_C_4,      MI_D_4, MI_E_4, MI_F_4, MI_G_4, MI_A_4, MI_B_4, MI_C_5, MI_D_5, MI_E_5, \
-    MI_B_1,  MI_C_2,  MI_D_2,  MI_E_2,  MI_F_2,  MI_G_2,  MI_A_2,  MI_B_2,  MI_C_3,      MI_D_3, MI_E_3, MI_F_3, MI_G_3, MI_A_3, MI_B_3, MI_C_4, MI_D_4, MI_E_4, \
-    MI_B,    MI_C_1,  MI_D_1,  MI_E_1,  MI_F_1,  MI_G_1,  MI_A_1,  MI_B_1,  MI_C_2,      MI_D_2, MI_E_2, MI_F_2, MI_G_2, MI_A_2, MI_B_2, MI_C_3, MI_D_3, MI_E_3, \
-    MI_B_N1, MI_C,    MI_D,    MI_E,    MI_F,    MI_G,    MI_A,    MI_B,    MI_C_1,      MI_D_1, MI_E_1, MI_F_1, MI_G_1, MI_A_1, MI_B_1, MI_C_2, MI_D_2, MI_E_2,  \
-    MI_B_N2, MI_C_N1, MI_D_N1, MI_E_N1, MI_F_N1, MI_G_N1, MI_A_N1, MI_B_N1, MI_C,        MI_D,   MI_E,   MI_F,   MI_G,   MI_A,   MI_B,   MI_C_1, MI_D_1, MI_E_1  \
+    MI_B3,  MI_C4,  MI_D4,  MI_E4,  MI_F4,  MI_G4,  MI_A4,  MI_B4,  MI_C5,      MI_D5, MI_E5, MI_F5, MI_G5, MI_A5, MI_B5, MI_C6, MI_D6, MI_E6, \
+    MI_B2,  MI_C3,  MI_D3,  MI_E3,  MI_F3,  MI_G3,  MI_A3,  MI_B3,  MI_C4,      MI_D4, MI_E4, MI_F4, MI_G4, MI_A4, MI_B4, MI_C5, MI_D5, MI_E5, \
+    MI_B1,  MI_C2,  MI_D2,  MI_E2,  MI_F2,  MI_G2,  MI_A2,  MI_B2,  MI_C3,      MI_D3, MI_E3, MI_F3, MI_G3, MI_A3, MI_B3, MI_C4, MI_D4, MI_E4, \
+    MI_B,   MI_C1,  MI_D1,  MI_E1,  MI_F1,  MI_G1,  MI_A1,  MI_B1,  MI_C2,      MI_D2, MI_E2, MI_F2, MI_G2, MI_A2, MI_B2, MI_C3, MI_D3, MI_E3, \
+    MI_BN1, MI_C,   MI_D,   MI_E,   MI_F,   MI_G,   MI_A,   MI_B,   MI_C1,      MI_D1, MI_E1, MI_F1, MI_G1, MI_A1, MI_B1, MI_C2, MI_D2, MI_E2, \
+    MI_BN2, MI_CN1, MI_DN1, MI_EN1, MI_FN1, MI_GN1, MI_AN1, MI_BN1, MI_C,       MI_D,  MI_E,  MI_F,  MI_G,  MI_A,  MI_B,  MI_C1, MI_D1, MI_E1  \
 ),
-// | 1       | 2      | 3      | 4       | 5      | 6      | 7       | 8       | 9     |||||| 10    | 11     | 12    | 13    | 14     | 15     | 16    | 17    | 18     |
+// | 1      | 2     | 3     | 4      | 5     | 6     | 7      | 8      | 9    |||||| 10   | 11    | 12   | 13   | 14    | 15    | 16   | 17   | 18    |
 [_LH_MINOR] = LAYOUT( \
-    MI_Bb_3,  MI_C_4,  MI_D_4,  MI_Eb_4,  MI_F_4,  MI_G_4,  MI_Ab_4,  MI_Bb_4,  MI_C_5,      MI_D_5, MI_Eb_5, MI_F_5, MI_G_5, MI_Ab_5, MI_Bb_5, MI_C_6, MI_D_6, MI_Eb_6, \
-    MI_Bb_2,  MI_C_3,  MI_D_3,  MI_Eb_3,  MI_F_3,  MI_G_3,  MI_Ab_3,  MI_Bb_3,  MI_C_4,      MI_D_4, MI_Eb_4, MI_F_4, MI_G_4, MI_Ab_4, MI_Bb_4, MI_C_5, MI_D_5, MI_Eb_5, \
-    MI_Bb_1,  MI_C_2,  MI_D_2,  MI_Eb_2,  MI_F_2,  MI_G_2,  MI_Ab_2,  MI_Bb_2,  MI_C_3,      MI_D_3, MI_Eb_3, MI_F_3, MI_G_3, MI_Ab_3, MI_Bb_3, MI_C_4, MI_D_4, MI_Eb_4, \
-    MI_Bb,    MI_C_1,  MI_D_1,  MI_Eb_1,  MI_F_1,  MI_G_1,  MI_Ab_1,  MI_Bb_1,  MI_C_2,      MI_D_2, MI_Eb_2, MI_F_2, MI_G_2, MI_Ab_2, MI_Bb_2, MI_C_3, MI_D_3, MI_Eb_3, \
-    MI_Bb_N1, MI_C,    MI_D,    MI_Eb,    MI_F,    MI_G,    MI_Ab,    MI_Bb,    MI_C_1,      MI_D_1, MI_Eb_1, MI_F_1, MI_G_1, MI_Ab_1, MI_Bb_1, MI_C_2, MI_D_2, MI_Eb_2, \
-    MI_Bb_N2, MI_C_N1, MI_D_N1, MI_Eb_N1, MI_F_N1, MI_G_N1, MI_Ab_N1, MI_Bb_N1, MI_C,        MI_D,   MI_Eb,   MI_F,   MI_G,   MI_Ab,   MI_Bb,   MI_C_1, MI_D_1, MI_Eb_1  \
+    MI_Bb3,  MI_C4,  MI_D4,  MI_Eb4,  MI_F4,  MI_G4,  MI_Ab4,  MI_Bb4,  MI_C5,      MI_D5, MI_Eb5, MI_F5, MI_G5, MI_Ab5, MI_Bb5, MI_C6, MI_D6, MI_Eb6, \
+    MI_Bb2,  MI_C3,  MI_D3,  MI_Eb3,  MI_F3,  MI_G3,  MI_Ab3,  MI_Bb3,  MI_C4,      MI_D4, MI_Eb4, MI_F4, MI_G4, MI_Ab4, MI_Bb4, MI_C5, MI_D5, MI_Eb5, \
+    MI_Bb1,  MI_C2,  MI_D2,  MI_Eb2,  MI_F2,  MI_G2,  MI_Ab2,  MI_Bb2,  MI_C3,      MI_D3, MI_Eb3, MI_F3, MI_G3, MI_Ab3, MI_Bb3, MI_C4, MI_D4, MI_Eb4, \
+    MI_Bb,   MI_C1,  MI_D1,  MI_Eb1,  MI_F1,  MI_G1,  MI_Ab1,  MI_Bb1,  MI_C2,      MI_D2, MI_Eb2, MI_F2, MI_G2, MI_Ab2, MI_Bb2, MI_C3, MI_D3, MI_Eb3, \
+    MI_BbN1, MI_C,   MI_D,   MI_Eb,   MI_F,   MI_G,   MI_Ab,   MI_Bb,   MI_C1,      MI_D1, MI_Eb1, MI_F1, MI_G1, MI_Ab1, MI_Bb1, MI_C2, MI_D2, MI_Eb2, \
+    MI_BbN2, MI_CN1, MI_DN1, MI_EbN1, MI_FN1, MI_GN1, MI_AbN1, MI_BbN1, MI_C,       MI_D,  MI_Eb,  MI_F,  MI_G,  MI_Ab,  MI_Bb,  MI_C1, MI_D1, MI_Eb1  \
 ),
-// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11    | 12     | 13     | 14    | 15     | 16    | 17     | 18     |
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10    | 11   | 12    | 13    | 14   | 15    | 16   | 17    | 18    |
 [_RH_CHROMATIC] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  MI_F_2, MI_Fs_2, MI_G_2, MI_Gs_2, MI_A_2,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Gs_1, MI_A_1, MI_As_1, MI_B_1,  MI_C_2, MI_Cs_2, MI_D_2, MI_Ds_2, MI_E_2,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Ds_1, MI_E_1, MI_F_1,  MI_Fs_1, MI_G_1, MI_Gs_1, MI_A_1, MI_As_1, MI_B_1,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_As,   MI_B,   MI_C_1,  MI_Cs_1, MI_D_1, MI_Ds_1, MI_E_1, MI_F_1,  MI_Fs_1, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_F,    MI_Fs,  MI_G,    MI_Gs,   MI_A,   MI_As,   MI_B,   MI_C_1,  MI_Cs_1, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,    MI_Cs,  MI_D,    MI_Ds,   MI_E,   MI_F,    MI_Fs,  MI_G,    MI_Gs    \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Cs2, MI_D2, MI_Ds2, MI_E2,  MI_F2, MI_Fs2, MI_G2, MI_Gs2, MI_A2,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Gs1, MI_A1, MI_As1, MI_B1,  MI_C2, MI_Cs2, MI_D2, MI_Ds2, MI_E2,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_Ds1, MI_E1, MI_F1,  MI_Fs1, MI_G1, MI_Gs1, MI_A1, MI_As1, MI_B1,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_As,  MI_B,  MI_C1,  MI_Cs1, MI_D1, MI_Ds1, MI_E1, MI_F1,  MI_Fs1, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_F,   MI_Fs, MI_G,   MI_Gs,  MI_A,  MI_As,  MI_B,  MI_C1,  MI_Cs1, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,   MI_Cs, MI_D,   MI_Ds,  MI_E,  MI_F,   MI_Fs, MI_G,   MI_Gs   \
 ),
-// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17    | 18     |
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10    | 11    | 12    | 13    | 14    | 15    | 16    | 17   | 18   |
 [_RH_MAJOR] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_4,  MI_D_4,  MI_E_4,  MI_F_4,  MI_G_4,  MI_A_4,  MI_B_4,  MI_C_5, MI_D_5, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_3,  MI_D_3,  MI_E_3,  MI_F_3,  MI_G_3,  MI_A_3,  MI_B_3,  MI_C_4, MI_D_4, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_2,  MI_D_2,  MI_E_2,  MI_F_2,  MI_G_2,  MI_A_2,  MI_B_2,  MI_C_3, MI_D_3, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_1,  MI_D_1,  MI_E_1,  MI_F_1,  MI_G_1,  MI_A_1,  MI_B_1,  MI_C_2, MI_D_2, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,    MI_D,    MI_E,    MI_F,    MI_G,    MI_A,    MI_B,    MI_C_1, MI_D_1, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_N1, MI_D_N1, MI_E_N1, MI_F_N1, MI_G_N1, MI_A_N1, MI_B_N1, MI_C,   MI_D    \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C4,  MI_D4,  MI_E4,  MI_F4,  MI_G4,  MI_A4,  MI_B4,  MI_C5, MI_D5, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C3,  MI_D3,  MI_E3,  MI_F3,  MI_G3,  MI_A3,  MI_B3,  MI_C4, MI_D4, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C2,  MI_D2,  MI_E2,  MI_F2,  MI_G2,  MI_A2,  MI_B2,  MI_C3, MI_D3, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C1,  MI_D1,  MI_E1,  MI_F1,  MI_G1,  MI_A1,  MI_B1,  MI_C2, MI_D2, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,   MI_D,   MI_E,   MI_F,   MI_G,   MI_A,   MI_B,   MI_C1, MI_D1, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_CN1, MI_DN1, MI_EN1, MI_FN1, MI_GN1, MI_AN1, MI_BN1, MI_C,  MI_D   \
 ),
-// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12      | 13     | 14     | 15      | 16      | 17    | 18     |
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10    | 11    | 12     | 13    | 14    | 15     | 16     | 17   | 18   |
 [_RH_MINOR] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_4,  MI_D_4,  MI_Eb_4,  MI_F_4,  MI_G_4,  MI_Ab_4,  MI_Bb_4,  MI_C_5, MI_D_5, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_3,  MI_D_3,  MI_Eb_3,  MI_F_3,  MI_G_3,  MI_Ab_3,  MI_Bb_3,  MI_C_4, MI_D_4, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_2,  MI_D_2,  MI_Eb_2,  MI_F_2,  MI_G_2,  MI_Ab_2,  MI_Bb_2,  MI_C_3, MI_D_3, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_1,  MI_D_1,  MI_Eb_1,  MI_F_1,  MI_G_1,  MI_Ab_1,  MI_Bb_1,  MI_C_2, MI_D_2, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,    MI_D,    MI_Eb,    MI_F,    MI_G,    MI_Ab,    MI_Bb,    MI_C_1, MI_D_1, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C_N1, MI_D_N1, MI_Eb_N1, MI_F_N1, MI_G_N1, MI_Ab_N1, MI_Bb_N1, MI_C,   MI_D    \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C4,  MI_D4,  MI_Eb4,  MI_F4,  MI_G4,  MI_Ab4,  MI_Bb4,  MI_C5, MI_D5, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C3,  MI_D3,  MI_Eb3,  MI_F3,  MI_G3,  MI_Ab3,  MI_Bb3,  MI_C4, MI_D4, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C2,  MI_D2,  MI_Eb2,  MI_F2,  MI_G2,  MI_Ab2,  MI_Bb2,  MI_C3, MI_D3, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C1,  MI_D1,  MI_Eb1,  MI_F1,  MI_G1,  MI_Ab1,  MI_Bb1,  MI_C2, MI_D2, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_C,   MI_D,   MI_Eb,   MI_F,   MI_G,   MI_Ab,   MI_Bb,   MI_C1, MI_D1, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_CN1, MI_DN1, MI_EbN1, MI_FN1, MI_GN1, MI_AbN1, MI_BbN1, MI_C,  MI_D   \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RH_DRUM] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MX_CH1,  MX_CH2,  MX_CH3,  MX_CH4,  MX_CH5,  MX_CH6,  MX_CH7,  MX_CH8,  XXXXXXX, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MX_CH9,  MX_CH10, MX_CH11, MX_CH12, MX_CH13, MX_CH14, MX_CH15, MX_CH16, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_29, MI_X_30, MI_X_31, MI_X_32, MI_X_45, MI_X_46, MI_X_47, MI_X_48, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_25, MI_X_26, MI_X_27, MI_X_28, MI_X_41, MI_X_42, MI_X_43, MI_X_44, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_21, MI_X_22, MI_X_23, MI_X_24, MI_X_37, MI_X_38, MI_X_39, MI_X_40, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_17, MI_X_18, MI_X_19, MI_X_20, MI_X_33, MI_X_34, MI_X_35, MI_X_36, XXXXXXX  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X29,  MI_X30,  MI_X31,  MI_X32,  MI_X45,  MI_X46,  MI_X47,  MI_X48,  XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X25,  MI_X26,  MI_X27,  MI_X28,  MI_X41,  MI_X42,  MI_X43,  MI_X44,  XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X21,  MI_X22,  MI_X23,  MI_X24,  MI_X37,  MI_X38,  MI_X39,  MI_X40,  XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X17,  MI_X18,  MI_X19,  MI_X20,  MI_X33,  MI_X34,  MI_X35,  MI_X36,  XXXXXXX  \
 ),
 // TODO: Add fancy pattern change keys, etc. to unused right columns.
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RH_PO] = LAYOUT( \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_41, MI_X_42, MI_X_43, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_33, MI_X_34, MI_X_35, MI_X_36, MI_X_44, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_37, MI_X_38, MI_X_39, MI_X_40, MI_X_45, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_25, MI_X_26, MI_X_27, MI_X_28, MI_X_46, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X_29, MI_X_30, MI_X_31, MI_X_32, MI_X_47, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X41,  MI_X42,  MI_X43,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X33,  MI_X34,  MI_X35,  MI_X36,  MI_X44,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X37,  MI_X38,  MI_X39,  MI_X40,  MI_X45,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X25,  MI_X26,  MI_X27,  MI_X28,  MI_X46,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X29,  MI_X30,  MI_X31,  MI_X32,  MI_X47,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
 ),
-// | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+// | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_PERFORM] = LAYOUT( \
-    MI_LEG,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_CHU,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_CHD,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_BENDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_BENDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_SUS,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+    MI_LEG,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CHNU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_CHND, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_SUST, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-// | 1        | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_TRANSPOSE] = LAYOUT( \
-    MI_TRNS_0, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_OCT_2,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_TRNSU,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_TRNSD,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_OCTU,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-    MI_OCTD,   _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+    MI_TR0,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_OC2,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_TRSU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_TRSD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_OCTU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_OCTD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_LC_CCS] = LAYOUT( \
@@ -448,21 +448,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_PERFORM] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_LEG,   \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHU,   \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHD,   \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BENDU, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BENDD, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_SUS    \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_LEG,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHNU, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHND, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BNDU, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BNDD, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_SUST  \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_TRANSPOSE] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRNS_0, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCT_2,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRNSU,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRNSD,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTU,   \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTD    \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TR0,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OC2,  \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRSU, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_TRSD, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTU, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_OCTD  \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_CCS] = LAYOUT( \
@@ -518,7 +518,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-// | 1                | 2                | 3            | 4           | 5          | 6              | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+// | 1                | 2                | 3            | 4           | 5          | 6              | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
 [_COMMAND] = LAYOUT( \
     _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
     XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
@@ -527,13 +527,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
     TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),  TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
-// | 1        | 2       | 3       | 4       | 5       | 6       | 7       | 8       | 9       |||||| 10      | 11      | 12       | 13     | 14     | 15     | 16     | 17     | 18     |
+// | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_CONTROL] = LAYOUT( \
-    _______,   MI_CH1,   MI_CH2,   MI_CH3,   MI_CH4,   MI_CH5,   MI_CH6,   MI_CH7,   MI_CH8,        MI_CH9,   MI_CH10,  MI_CH11,   MI_CH12, MI_CH13, MI_CH14, MI_CH15, MI_CH16, XXXXXXX, \
-    MI_TRNS_0, MI_VEL_0, MI_VEL_1, MI_VEL_2, MI_VEL_3, MI_VEL_4, MI_VEL_5, MI_VEL_6, MI_VEL_7,      MI_VEL_8, MI_VEL_9, MI_VEL_10, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    MI_TRNS_0, XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,       XXXXXXX,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    MI_OCT_2,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,       XXXXXXX,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    MI_OCT_2,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,       XXXXXXX,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-    MI_ALLOFF, XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,       XXXXXXX,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+    _______, MI_CH1,  MI_CH2,  MI_CH3,  MI_CH4,  MI_CH5,  MI_CH6,  MI_CH7,  MI_CH8,       MI_CH9,  MI_CH10, MI_CH11, MI_CH12, MI_CH13, MI_CH14, MI_CH15, MI_CH16, XXXXXXX, \
+    MI_TR0,  MI_VL0,  MI_VL1,  MI_VL2,  MI_VL3,  MI_VL4,  MI_VL5,  MI_VL6,  MI_VL7,       MI_VL8,  MI_VL9,  MI_VL10, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_TR0,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_OC2,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_OC2,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    MI_AOFF, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
 )
 };

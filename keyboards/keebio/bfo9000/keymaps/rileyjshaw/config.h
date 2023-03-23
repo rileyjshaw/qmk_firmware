@@ -7,13 +7,12 @@
 // #define EE_HANDS
 
 #undef MANUFACTURER
-#define MANUFACTURER Misery & Co.
+#define MANUFACTURER "Misery & Co."
 
 #undef PRODUCT
-#define PRODUCT Stargazer
+#define PRODUCT "Stargazer"
 
-#undef DESCRIPTION
-#define DESCRIPTION An isomorphic / orthogonal MIDI keyboard
+#define LAYER_STATE_32BIT
 
 #define MIDI_BASIC
 #define MIDI_ADVANCED
@@ -25,5 +24,4 @@
 
 // Save some firmware space by turning off unused features.
 #define NO_ACTION_TAPPING
-#define NO_ACTION_MACRO
-#define NO_ACTION_FUNCTION
+#define NO_ACTION_ONESHOT
