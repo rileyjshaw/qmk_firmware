@@ -190,6 +190,12 @@ enum custom_keycodes {
     MI_CCT9,
     CC_KEYCODES_END = MI_CCT9,
 
+    BANK_KEYCODES_START,
+    MI_BNK0 = BANK_KEYCODES_START,
+    MI_BNKU,
+    MI_BNKD,
+    BANK_KEYCODES_END = MI_BNKD,
+
     PC_KEYCODES_START,
     MI_PC0 = PC_KEYCODES_START,
     MI_PCU,
@@ -217,14 +223,15 @@ void keyboard_post_init_user(void) {
 
 bool toggle_cc_state[16][CC_KEYCODES_END + 1 - CC_TOGGLE_KEYCODES_START] = { false };
 int8_t non_transposed_channel = 7; // Send drums over MIDI Channel 8 by default.
-uint8_t pc_number = 0;
+uint16_t selected_bank = 0; // aka MIDI CC 0 (MSB) and 32 (LSB).
+uint8_t selected_patch = 0; // aka the Program Change number.
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t note_number = 0;
     uint8_t momentary_cc_number = 0;
     uint8_t toggle_cc_number = 0;
     uint8_t fixed_channel_number = 100;  // Invalid, so we ignore it unless its set.
-    bool is_pc = 0;
+    bool should_update_patch = false;
 
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
@@ -247,17 +254,31 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case CC_TOGGLE_KEYCODES_START ... CC_KEYCODES_END:
             toggle_cc_number = keycode + 102 - CC_KEYCODES_START;
             break;
+        case BANK_KEYCODES_START ... BANK_KEYCODES_END:
+            if (record->event.pressed) {
+                should_update_patch = true;
+                if (keycode == MI_BNK0 && selected_bank != 0) {
+                    selected_bank = 0;
+                } else if (keycode == MI_BNKU && selected_bank < 16383) {
+                    selected_bank++;
+                } else if (keycode == MI_BNKD && selected_bank > 0) {
+                    selected_bank--;
+                } else {
+                    should_update_patch = false;
+                }
+            }
+            break;
         case PC_KEYCODES_START ... PC_KEYCODES_END:
             if (record->event.pressed) {
-                is_pc = true;
-                if (keycode == MI_PC0 && pc_number != 0) {
-                    pc_number = 0;
-                } else if (keycode == MI_PCU && pc_number < 127) {
-                    pc_number++;
-                } else if (keycode == MI_PCD && pc_number > 0) {
-                    pc_number--;
+                should_update_patch = true;
+                if (keycode == MI_PC0 && selected_patch != 0) {
+                    selected_patch = 0;
+                } else if (keycode == MI_PCU && selected_patch < 127) {
+                    selected_patch++;
+                } else if (keycode == MI_PCD && selected_patch > 0) {
+                    selected_patch--;
                 } else {
-                    is_pc = false;
+                    should_update_patch = false;
                 }
             }
             break;
@@ -295,8 +316,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         bool toggle_state = !toggle_cc_state[midi_channel][toggle_cc_number - 102];
         toggle_cc_state[midi_channel][toggle_cc_number - 102] = toggle_state;
         midi_send_cc(&midi_device, midi_channel, toggle_cc_number, toggle_state ? 127 : 0);
-    } else if (is_pc) {
-        midi_send_programchange(&midi_device, midi_channel, pc_number);
+    } else if (should_update_patch) {
+        midi_send_cc(&midi_device, midi_channel, 0, (selected_bank & 0xFF00) >> 8);
+        midi_send_cc(&midi_device, midi_channel, 32, selected_bank & 0x00FF);
+        midi_send_programchange(&midi_device, midi_channel, selected_patch);
     }
 
     return true;
@@ -524,9 +547,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_RC_EXPLORE] = LAYOUT( \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CH1,  \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHNU, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_CHND, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BNK0, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BNKU, \
+    _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_BNKD, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_PC0,  \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_PCU,  \
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, MI_PCD   \
