@@ -236,10 +236,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
         case LOWER_OCTAVE_KEYCODES_START ... LOWER_OCTAVE_KEYCODES_END:
-            note_number = keycode + 33 - LOWER_OCTAVE_KEYCODES_START;
+            note_number = keycode - LOWER_OCTAVE_KEYCODES_END + MIDI_TONE_MIN - 1;
             break;
         case HIGHER_OCTAVE_KEYCODES_START ... HIGHER_OCTAVE_KEYCODES_END:
-            note_number = keycode + 119 - HIGHER_OCTAVE_KEYCODES_START;
+            note_number = keycode - HIGHER_OCTAVE_KEYCODES_START + MIDI_TONE_MAX + 1;
             break;
         case NON_TRANSPOSED_CHANNEL_KEYCODES_START ... NON_TRANSPOSED_CHANNEL_KEYCODES_END:
             non_transposed_channel = keycode - NON_TRANSPOSED_CHANNEL_KEYCODES_START;
