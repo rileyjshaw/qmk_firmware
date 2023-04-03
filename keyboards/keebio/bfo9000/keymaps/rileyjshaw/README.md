@@ -19,6 +19,8 @@ qmk compile -kb keebio/bfo9000 -km rileyjshaw
 
 # Plug in your Arduino-based keyboard, then run…
 qmk flash -kb keebio/bfo9000 -km rileyjshaw
+
+# Or you can flash the keyboard using the QMK Toolbox app.
 ```
 
 ## References
