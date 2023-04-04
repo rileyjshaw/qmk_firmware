@@ -63,6 +63,9 @@ const layer_state_t RH_BITMASK = (1UL << _END_OF_RH_LAYER_GROUP) - (1UL << _STAR
 const layer_state_t LC_BITMASK = (1UL << _END_OF_LC_LAYER_GROUP) - (1UL << _END_OF_RH_LAYER_GROUP);
 const layer_state_t RC_BITMASK = (1UL << _END_OF_RC_LAYER_GROUP) - (1UL << _END_OF_LC_LAYER_GROUP);
 
+layer_state_t prev_layer_state = 0;
+bool is_clearing_layer_group = false;
+
 // Sequencer resolution and tempo defaults.
 #define _SQ_RES_INIT 6  // SQ_RES_8, twice per beat.
 #define _SQ_TMP_1 80
@@ -206,7 +209,13 @@ enum custom_keycodes {
     SQ_TCLR = SEQUENCER_KEYCODES_START,
     SQ_TMP1,
     SQ_TMP2,
-    SQ_TMP3
+    SQ_TMP3,
+
+    CLEAR_KEYCODES_START,
+    LC_CLR = CLEAR_KEYCODES_START,
+    RH_CLR,
+    RC_CLR,
+    CLEAR_KEYCODES_END = RC_CLR
 };
 
 void keyboard_post_init_user(void) {
@@ -316,13 +325,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 is_clearing_layer_group = true;
                 if (keycode == LC_CLR) {
-                    layer_xor(LC_BITMASK);
+                    layer_and(~LC_BITMASK);
                 }
                 else if (keycode == RH_CLR) {
-                    layer_xor(RH_BITMASK);
+                    layer_and(~RH_BITMASK);
                 }
                 else if (keycode == RC_CLR) {
-                    layer_xor(RC_BITMASK);
+                    layer_and(~RC_BITMASK);
                 }
             }
     /*Amen*/break;
@@ -353,14 +362,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-layer_state_t prev_layer_state = 0;
 layer_state_t layer_state_set_user(layer_state_t state) {
+    // Create a bitmask of changed layers. A 1 bit indicates change in either direction.
     layer_state_t changed_layer_bitmask = state ^ prev_layer_state;
     uint8_t changed_layer = get_highest_layer(changed_layer_bitmask);
 
-    // If a layer is out of range or is being turned off, don’t do anything fancy.
-    if (changed_layer >= _START_OF_LAYER_GROUPS && changed_layer <= _END_OF_LAYER_GROUPS && IS_LAYER_ON_STATE(state, changed_layer)) {
-        // Clear all other layers in the layer group.
+    // If a layer is out of range or is being cleared, don’t do anything fancy.
+    // NOTE: When selecting layers from the command menu, the chosen layer
+    //       should always be turned on. QMK only has a “toggle layer” function
+    //       (TG), and is lacking a persistent “activate layer” function. So as
+    //       a hack, unless we’re explicitly clearing a layer group, we set any
+    //       toggled layer to be on.
+    if (changed_layer >= _START_OF_LAYER_GROUPS && changed_layer <= _END_OF_LAYER_GROUPS && (!is_clearing_layer_group || IS_LAYER_ON_STATE(state, changed_layer))) {
+        // Clear all layers in the layer group.
         if (changed_layer < _END_OF_RH_LAYER_GROUP) {
             state &= ~RH_BITMASK;
         } else if (changed_layer < _END_OF_LC_LAYER_GROUP) {
@@ -373,6 +387,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
         state |= changed_layer_bitmask;
     }
 
+    is_clearing_layer_group = false;
     prev_layer_state = state;
     return state;
 }
@@ -604,10 +619,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_COMMAND] = LAYOUT( \
     _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
     XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),  TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM), TG(_RH_PO),  XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),  TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), XXXXXXX, RC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM), TG(_RH_PO),  XXXXXXX,         XXXXXXX,         XXXXXXX, RH_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
     DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), XXXXXXX,      XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
-    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),  TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
+    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),  TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         XXXXXXX, LC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_CONTROL] = LAYOUT( \
