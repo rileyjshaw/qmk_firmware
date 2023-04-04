@@ -231,15 +231,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t momentary_cc_number = 0;
     uint8_t toggle_cc_number = 0;
     uint8_t fixed_channel_number = 100;  // Invalid, so we ignore it unless its set.
+
+    bool should_play_note = false;
+    bool should_send_momentary_cc = false;
+    bool should_send_toggle_cc = false;
     bool should_update_patch = false;
 
     switch (keycode) {
         // MIDI note extensions outside of the regular octave range.
         case LOWER_OCTAVE_KEYCODES_START ... LOWER_OCTAVE_KEYCODES_END:
             note_number = keycode - LOWER_OCTAVE_KEYCODES_END + MIDI_TONE_MIN - 1;
+            should_play_note = true;
             break;
         case HIGHER_OCTAVE_KEYCODES_START ... HIGHER_OCTAVE_KEYCODES_END:
             note_number = keycode - HIGHER_OCTAVE_KEYCODES_START + MIDI_TONE_MAX + 1;
+            should_play_note = true;
             break;
         case NON_TRANSPOSED_CHANNEL_KEYCODES_START ... NON_TRANSPOSED_CHANNEL_KEYCODES_END:
             non_transposed_channel = keycode - NON_TRANSPOSED_CHANNEL_KEYCODES_START;
@@ -247,12 +253,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case NON_TRANSPOSED_KEYCODES_START ... NON_TRANSPOSED_KEYCODES_END:
             note_number = keycode + 98 - NON_TRANSPOSED_KEYCODES_START - 12 * midi_config.octave - midi_config.transpose;
             fixed_channel_number = non_transposed_channel;
+            should_play_note = true;
             break;
         case CC_KEYCODES_START ... CC_MOMENTARY_KEYCODES_END:
-            momentary_cc_number = keycode + 102 - CC_KEYCODES_START;
+            if (record->event.pressed) {
+                momentary_cc_number = keycode + 102 - CC_KEYCODES_START;
+                should_send_momentary_cc = true;
+            }
             break;
         case CC_TOGGLE_KEYCODES_START ... CC_KEYCODES_END:
-            toggle_cc_number = keycode + 102 - CC_KEYCODES_START;
+            if (record->event.pressed) {
+                toggle_cc_number = keycode + 102 - CC_KEYCODES_START;
+                should_send_toggle_cc = true;
+            }
             break;
         case BANK_KEYCODES_START ... BANK_KEYCODES_END:
             if (record->event.pressed) {
@@ -298,21 +311,36 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
         case SQ_TMP3:
             sequencer_set_tempo(_SQ_TMP_3);
+        // Clear layer groups.
+        case CLEAR_KEYCODES_START ... CLEAR_KEYCODES_END:
+            if (record->event.pressed) {
+                is_clearing_layer_group = true;
+                if (keycode == LC_CLR) {
+                    layer_xor(LC_BITMASK);
+                }
+                else if (keycode == RH_CLR) {
+                    layer_xor(RH_BITMASK);
+                }
+                else if (keycode == RC_CLR) {
+                    layer_xor(RC_BITMASK);
+                }
+            }
     /*Amen*/break;
         default:
             return true;
     }
 
     uint8_t midi_channel = fixed_channel_number < 16 ? fixed_channel_number : midi_config.channel;
-    if (note_number) {
+
+    if (should_play_note) {
         if (record->event.pressed) {
             midi_send_noteon(&midi_device, midi_channel, midi_compute_note(note_number), midi_config.velocity);
         } else {
             midi_send_noteoff(&midi_device, midi_channel, midi_compute_note(note_number), 0);
         }
-    } else if (momentary_cc_number) {
+    } else if (should_send_momentary_cc) {
         midi_send_cc(&midi_device, midi_channel, momentary_cc_number, record->event.pressed ? 127 : 0);
-    } else if (toggle_cc_number && record->event.pressed) {
+    } else if (should_send_toggle_cc) {
         bool toggle_state = !toggle_cc_state[midi_channel][toggle_cc_number - 102];
         toggle_cc_state[midi_channel][toggle_cc_number - 102] = toggle_state;
         midi_send_cc(&midi_device, midi_channel, toggle_cc_number, toggle_state ? 127 : 0);
