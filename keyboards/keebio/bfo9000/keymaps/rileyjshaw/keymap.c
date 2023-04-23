@@ -8,8 +8,8 @@ enum layers {
     _LH_CHROMATIC,
     _LH_MAJOR,
     _LH_MINOR,
+    _LH_GUITAR,
     // _LH_DRUM,
-    // _LH_GUITAR,
     // _LH_PO,
     // _LH_SEQUENCER,
 
@@ -433,6 +433,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     MI_Bb,   MI_C1,  MI_D1,  MI_Eb1,  MI_F1,  MI_G1,  MI_Ab1,  MI_Bb1,  MI_C2,      MI_D2, MI_Eb2, MI_F2, MI_G2, MI_Ab2, MI_Bb2, MI_C3, MI_D3, MI_Eb3, \
     MI_BbN1, MI_C,   MI_D,   MI_Eb,   MI_F,   MI_G,   MI_Ab,   MI_Bb,   MI_C1,      MI_D1, MI_Eb1, MI_F1, MI_G1, MI_Ab1, MI_Bb1, MI_C2, MI_D2, MI_Eb2, \
     MI_BbN2, MI_CN1, MI_DN1, MI_EbN1, MI_FN1, MI_GN1, MI_AbN1, MI_BbN1, MI_C,       MI_D,  MI_Eb,  MI_F,  MI_G,  MI_Ab,  MI_Bb,  MI_C1, MI_D1, MI_Eb1  \
+),
+// | 1     | 2     | 3     | 4    | 5     | 6    | 7     | 8     | 9     |||||| 10    | 11   | 12    | 13    | 14    | 15    | 16   | 17    | 18   |
+[_LH_GUITAR] = LAYOUT( \
+    MI_B1,  MI_C2,  MI_Cs2, MI_D2, MI_Ds2, MI_E2, MI_F2,  MI_Fs2, MI_G2,       MI_Gs2, MI_A2, MI_As2, MI_B2,  MI_C3,  MI_Cs3, MI_D3, MI_Ds3, MI_E3, \
+    MI_Fs1, MI_G1,  MI_Gs1, MI_A1, MI_As1, MI_B1, MI_C2,  MI_Cs2, MI_D2,       MI_Ds2, MI_E2, MI_F2,  MI_Fs2, MI_G2,  MI_Gs2, MI_A2, MI_As2, MI_B2, \
+    MI_D1,  MI_Ds1, MI_E1,  MI_F1, MI_Fs1, MI_G1, MI_Gs1, MI_A1,  MI_As1,      MI_B1,  MI_C2, MI_Cs2, MI_D2,  MI_Ds2, MI_E2,  MI_F2, MI_Fs2, MI_G2, \
+    MI_A,   MI_As,  MI_B,   MI_C1, MI_Cs1, MI_D1, MI_Ds1, MI_E1,  MI_F1,       MI_Fs1, MI_G1, MI_Gs1, MI_A1,  MI_As1, MI_B1,  MI_C2, MI_Cs2, MI_D2, \
+    MI_E,   MI_F,   MI_Fs,  MI_G,  MI_Gs,  MI_A,  MI_As,  MI_B,   MI_C1,       MI_Cs1, MI_D1, MI_Ds1, MI_E1,  MI_F1,  MI_Fs1, MI_G1, MI_Gs1, MI_A1, \
+    MI_BN1, MI_C,   MI_Cs,  MI_D,  MI_Ds,  MI_E,  MI_F,   MI_Fs,  MI_G,        MI_Gs,  MI_A,  MI_As,  MI_B,   MI_C1,  MI_Cs1, MI_D1, MI_Ds1, MI_E1  \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10    | 11   | 12    | 13    | 14   | 15    | 16   | 17    | 18    |
 [_RH_CHROMATIC] = LAYOUT( \
