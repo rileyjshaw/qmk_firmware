@@ -1,3 +1,4 @@
 MOUSEKEY_ENABLE = no
 MIDI_ENABLE = yes
 SEQUENCER_ENABLE = yes
+DEBOUNCE_TYPE = sym_eager_pk
