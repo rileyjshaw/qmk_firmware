@@ -25,11 +25,14 @@ enum layers {
     _END_OF_RH_LAYER_GROUP,
 
     // Left column.
-    _LC_PERFORM = _END_OF_RH_LAYER_GROUP,
+    _LC_PERFORM_CHN = _END_OF_RH_LAYER_GROUP,
+    _LC_PERFORM_VOL,
+    _LC_PERFORM_ATK,
+    _LC_PERFORM_REL,
     _LC_TRANSPOSE,
     _LC_CCS,
-    _LC_CCM,
-    _LC_CCT,
+    _LC_CCM, // Momentary CCs
+    _LC_CCT, // Toggle CCs
     _LC_CHANNEL,
     _END_OF_LC_LAYER_GROUP,
 
@@ -37,8 +40,8 @@ enum layers {
     _RC_PERFORM = _END_OF_LC_LAYER_GROUP,
     _RC_TRANSPOSE,
     _RC_CCS,
-    _RC_CCM,
-    _RC_CCT,
+    _RC_CCM, // Momentary CCs
+    _RC_CCT, // Toggle CCs
     _RC_CHANNEL,
     _RC_EXPLORE,
     _END_OF_RC_LAYER_GROUP,
@@ -219,10 +222,23 @@ enum custom_keycodes {
 
     // One-off keycodes start.
     MI_TRX,
+
+    // Continuous CC controls.
+    MI_VOLU,
+    MI_VOLD,
+    MI_ATKU,
+    MI_ATKD,
+    MI_RELU,
+    MI_RELD,
 };
 
+// Global state for MIDI CC controls
+uint8_t midi_volume = 16;   // MIDI CC 7
+uint8_t midi_attack = 0;   // MIDI CC 73
+uint8_t midi_release = 0;  // MIDI CC 72
+
 void keyboard_post_init_user(void) {
-    layer_on(_LC_PERFORM);
+    layer_on(_LC_PERFORM_CHN);
     layer_on(_COMMAND_KEY);
 
     sequencer_set_tempo(_SQ_TMP_2);
@@ -323,6 +339,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
         case SQ_TMP3:
             sequencer_set_tempo(_SQ_TMP_3);
+            break;
         // Clear layer groups.
         case CLEAR_KEYCODES_START ... CLEAR_KEYCODES_END:
             if (record->event.pressed) {
@@ -337,10 +354,47 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     layer_and(~RC_BITMASK);
                 }
             }
+            break;
         case MI_TRX:
             if (record->event.pressed) {
                 midi_config.octave = QK_MIDI_OCTAVE_2 - MIDI_OCTAVE_MIN;
                 midi_config.transpose = 0;
+            }
+            break;
+        case MI_VOLU:
+            if (record->event.pressed && midi_volume < 127) {
+                midi_volume += 8;
+                midi_send_cc(&midi_device, midi_config.channel, 7, midi_volume);
+            }
+            break;
+        case MI_VOLD:
+            if (record->event.pressed && midi_volume > 0) {
+                midi_volume -= 8;
+                midi_send_cc(&midi_device, midi_config.channel, 7, midi_volume);
+            }
+            break;
+        case MI_ATKU:
+            if (record->event.pressed && midi_attack < 127) {
+                midi_attack += 8;
+                midi_send_cc(&midi_device, midi_config.channel, 73, midi_attack);
+            }
+            break;
+        case MI_ATKD:
+            if (record->event.pressed && midi_attack > 0) {
+                midi_attack -= 8;
+                midi_send_cc(&midi_device, midi_config.channel, 73, midi_attack);
+            }
+            break;
+        case MI_RELU:
+            if (record->event.pressed && midi_release < 127) {
+                midi_release += 8;
+                midi_send_cc(&midi_device, midi_config.channel, 72, midi_release);
+            }
+            break;
+        case MI_RELD:
+            if (record->event.pressed && midi_release > 0) {
+                midi_release -= 8;
+                midi_send_cc(&midi_device, midi_config.channel, 72, midi_release);
             }
             break;
     /*Amen*/break;
@@ -499,10 +553,37 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______, _______, _______,      MI_X29,  MI_X30,  MI_X31,  MI_X32,  MI_X47,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
 ),
 // | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
-[_LC_PERFORM] = LAYOUT( \
+[_LC_PERFORM_CHN] = LAYOUT( \
     MI_LEG,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CHNU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_CHND, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_SUST, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+),
+// | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+[_LC_PERFORM_VOL] = LAYOUT( \
+    MI_LEG,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_VOLU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_VOLD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_SUST, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+),
+// | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+[_LC_PERFORM_ATK] = LAYOUT( \
+    MI_LEG,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_ATKU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_ATKD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_BNDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_SUST, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
+),
+// | 1       | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
+[_LC_PERFORM_REL] = LAYOUT( \
+    MI_LEG,  _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_RELU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    MI_RELD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_BNDU, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_BNDD, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     MI_SUST, _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
@@ -633,14 +714,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, \
     _______,      _______, _______, _______, _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-// | 1                | 2                | 3            | 4             | 5          | 6              | 7              | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
+// | 1                   | 2                  | 3                | 4            | 5             | 6          | 7              | 8              | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
 [_COMMAND] = LAYOUT( \
-    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
-    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),    TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), XXXXXXX, RC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM),   TG(_RH_PO),  XXXXXXX,         XXXXXXX,         XXXXXXX, RH_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), DF(_LH_GUITAR), XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),    TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         XXXXXXX, LC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
+    _______,             XXXXXXX,             XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
+    TG(_LC_PERFORM_CHN), XXXXXXX,             XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_LC_PERFORM_VOL), TG(_RC_PERFORM),     TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),    TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), RC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_LC_PERFORM_ATK), TG(_RH_CHROMATIC),   TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM),   TG(_RH_PO),  XXXXXXX,         XXXXXXX,         RH_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_LC_PERFORM_REL), DF(_LH_CHROMATIC),   DF(_LH_MAJOR),     DF(_LH_MINOR), DF(_LH_GUITAR), XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    XXXXXXX,             TG(_LC_PERFORM_CHN), TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),    TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         LC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [_CONTROL] = LAYOUT( \
