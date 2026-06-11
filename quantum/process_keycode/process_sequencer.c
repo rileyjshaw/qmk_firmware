@@ -15,6 +15,8 @@
  */
 
 #include "process_sequencer.h"
+#include "sequencer.h"
+#include "quantum_keycodes.h"
 
 bool process_sequencer(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
