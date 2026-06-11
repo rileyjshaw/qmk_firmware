@@ -77,13 +77,13 @@ define GENERATE_MSG_MAKE_KB
 endef
 MSG_MAKE_KB = $(eval $(call GENERATE_MSG_MAKE_KB))$(MSG_MAKE_KB_ACTUAL)
 define GENERATE_MSG_MAKE_TEST
-    MSG_MAKE_TEST_ACTUAL := Making test $(BOLD)$(TEST_NAME)$(NO_COLOR)
+    MSG_MAKE_TEST_ACTUAL := Making test $(BOLD)$(TEST_ID)$(NO_COLOR)
     ifneq ($$(MAKE_TARGET),)
         MSG_MAKE_TEST_ACTUAL += with target $(BOLD)$$(MAKE_TARGET)$(NO_COLOR)
     endif
 endef
 MSG_MAKE_TEST = $(eval $(call GENERATE_MSG_MAKE_TEST))$(MSG_MAKE_TEST_ACTUAL)
-MSG_TEST = Testing $(BOLD)$(TEST_NAME)$(NO_COLOR)
+MSG_TEST = Testing $(BOLD)$(TEST_ID)$(NO_COLOR)
 define GENERATE_MSG_AVAILABLE_KEYMAPS
     MSG_AVAILABLE_KEYMAPS_ACTUAL := Available keymaps for $(BOLD)$$(CURRENT_KB)$(NO_COLOR):
 endef
@@ -91,7 +91,6 @@ MSG_AVAILABLE_KEYMAPS = $(eval $(call GENERATE_MSG_AVAILABLE_KEYMAPS))$(MSG_AVAI
 
 MSG_BOOTLOADER_NOT_FOUND_BASE = Bootloader not found. Make sure the board is in bootloader mode. See https://docs.qmk.fm/\#/newbs_flashing\n
 MSG_CHECK_FILESIZE = Checking file size of $(TARGET).$(FIRMWARE_FORMAT)
-MSG_CHECK_FILESIZE_SKIPPED = (Firmware size check does not yet support $(MCU_ORIG); skipping)
 MSG_FILE_TOO_BIG = $(ERROR_COLOR)The firmware is too large!$(NO_COLOR) $(CURRENT_SIZE)/$(MAX_SIZE) ($(OVER_SIZE) bytes over)\n
 MSG_FILE_TOO_SMALL = The firmware is too small! $(CURRENT_SIZE)/$(MAX_SIZE)\n
 MSG_FILE_JUST_RIGHT = The firmware size is fine - $(CURRENT_SIZE)/$(MAX_SIZE) ($(PERCENT_SIZE)%%, $(FREE_SIZE) bytes free)\n
@@ -103,6 +102,10 @@ MSG_FLASH_ARCH = $(WARN_COLOR)WARNING:$(NO_COLOR) This board's architecture is n
 MSG_BOOTLOADER_NOT_FOUND = $(ERROR_COLOR)ERROR:$(NO_COLOR) $(MSG_BOOTLOADER_NOT_FOUND_BASE) Trying again in 5s (Ctrl+C to cancel)\n
 BOOTLOADER_RETRY_TIME ?= 0.5
 MSG_BOOTLOADER_NOT_FOUND_QUICK_RETRY = $(MSG_BOOTLOADER_NOT_FOUND_BASE) Trying again every $(BOOTLOADER_RETRY_TIME)s (Ctrl+C to cancel)
+
+define WARNING_MESSAGE
+    $(shell printf "\n %-99s $(WARN_STRING)\n" "$1" >&2)
+endef
 
 define CATASTROPHIC_ERROR
     $(shell printf "\n * %-99s $(ERROR_STRING)\n" "$2" >&2)
