@@ -41,8 +41,8 @@ Compile the firmware:
 qmk compile -kb keebio/bfo9000 -km rileyjshaw
 ```
 
-Finally, plug in your Arduino-based keyboard and flash the firmware you just
-compiled using the QMK Toolbox app. It should be called
+Finally, plug in your Arduino-based keyboard, click the Reset button, and flash
+the firmware you just compiled using the QMK Toolbox app. It should be called
 `keebio_bfo9000_rileyjshaw.hex` in the root `qmk_firmware` directory.
 
 _Note: It should also be possible to flash the firmware from the command line

@@ -25,11 +25,14 @@ enum layers {
     _END_OF_RH_LAYER_GROUP,
 
     // Left column.
-    _LC_PERFORM = _END_OF_RH_LAYER_GROUP,
+    _LC_PERFORM_CHN = _END_OF_RH_LAYER_GROUP,
+    _LC_PERFORM_VOL,
+    _LC_PERFORM_ATK,
+    _LC_PERFORM_REL,
     _LC_TRANSPOSE,
     _LC_CCS,
-    _LC_CCM,
-    _LC_CCT,
+    _LC_CCM, // Momentary CCs
+    _LC_CCT, // Toggle CCs
     _LC_CHANNEL,
     _END_OF_LC_LAYER_GROUP,
 
@@ -37,8 +40,8 @@ enum layers {
     _RC_PERFORM = _END_OF_LC_LAYER_GROUP,
     _RC_TRANSPOSE,
     _RC_CCS,
-    _RC_CCM,
-    _RC_CCT,
+    _RC_CCM, // Momentary CCs
+    _RC_CCT, // Toggle CCs
     _RC_CHANNEL,
     _RC_EXPLORE,
     _END_OF_RC_LAYER_GROUP,
@@ -219,10 +222,23 @@ enum custom_keycodes {
 
     // One-off keycodes start.
     MI_TRX,
+
+    // Continuous CC controls.
+    MI_VOLU,
+    MI_VOLD,
+    MI_ATKU,
+    MI_ATKD,
+    MI_RELU,
+    MI_RELD,
 };
 
+// Global state for MIDI CC controls
+uint8_t midi_volume = 16;   // MIDI CC 7
+uint8_t midi_attack = 0;   // MIDI CC 73
+uint8_t midi_release = 0;  // MIDI CC 72
+
 void keyboard_post_init_user(void) {
-    layer_on(_LC_PERFORM);
+    layer_on(_LC_PERFORM_CHN);
     layer_on(_COMMAND_KEY);
 
     sequencer_set_tempo(_SQ_TMP_2);
@@ -323,6 +339,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
         case SQ_TMP3:
             sequencer_set_tempo(_SQ_TMP_3);
+            break;
         // Clear layer groups.
         case CLEAR_KEYCODES_START ... CLEAR_KEYCODES_END:
             if (record->event.pressed) {
@@ -337,10 +354,47 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     layer_and(~RC_BITMASK);
                 }
             }
+            break;
         case MI_TRX:
             if (record->event.pressed) {
                 midi_config.octave = QK_MIDI_OCTAVE_2 - MIDI_OCTAVE_MIN;
                 midi_config.transpose = 0;
+            }
+            break;
+        case MI_VOLU:
+            if (record->event.pressed && midi_volume < 127) {
+                midi_volume += 8;
+                midi_send_cc(&midi_device, midi_config.channel, 7, midi_volume);
+            }
+            break;
+        case MI_VOLD:
+            if (record->event.pressed && midi_volume > 0) {
+                midi_volume -= 8;
+                midi_send_cc(&midi_device, midi_config.channel, 7, midi_volume);
+            }
+            break;
+        case MI_ATKU:
+            if (record->event.pressed && midi_attack < 127) {
+                midi_attack += 8;
+                midi_send_cc(&midi_device, midi_config.channel, 73, midi_attack);
+            }
+            break;
+        case MI_ATKD:
+            if (record->event.pressed && midi_attack > 0) {
+                midi_attack -= 8;
+                midi_send_cc(&midi_device, midi_config.channel, 73, midi_attack);
+            }
+            break;
+        case MI_RELU:
+            if (record->event.pressed && midi_release < 127) {
+                midi_release += 8;
+                midi_send_cc(&midi_device, midi_config.channel, 72, midi_release);
+            }
+            break;
+        case MI_RELD:
+            if (record->event.pressed && midi_release > 0) {
+                midi_release -= 8;
+                midi_send_cc(&midi_device, midi_config.channel, 72, midi_release);
             }
             break;
     /*Amen*/break;
@@ -403,8 +457,8 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 /* To save flash space, the keymap is stored in compressed form and expanded on
  * the fly by the `keymap_key_to_keycode()` override at the bottom of this
- * file. Storing all 26 layers as full LAYOUT() grids would cost 5616 bytes of
- * PROGMEM (26 layers × 108 keys × 2 bytes), most of it `_______` padding or
+ * file. Storing all 29 layers as full LAYOUT() grids would cost 6264 bytes of
+ * PROGMEM (29 layers × 108 keys × 2 bytes), most of it `_______` padding or
  * arithmetically predictable MIDI notes.
  *
  *   - Note layers (_LH_* and _RH_CHROMATIC/_RH_MAJOR/_RH_MINOR) are generated
@@ -471,12 +525,15 @@ static uint16_t note_grid_keycode(uint8_t layer, uint8_t vrow, uint8_t vcol) {
 }
 
 // The 6 keys in the outermost column of each _LC_*/_RC_* layer, top row first.
-// The first six entries match the _LC_* layer order so they can be indexed by
-// `layer - _LC_PERFORM`; _RC_* layers remap through rc_column_ids below.
-enum column_id { COL_PERFORM, COL_TRANSPOSE_L, COL_CCS, COL_CCM, COL_CCT, COL_CHANNEL, COL_TRANSPOSE_R, COL_EXPLORE };
+// The first nine entries match the _LC_* layer order so they can be indexed by
+// `layer - _LC_PERFORM_CHN`; _RC_* layers remap through rc_column_ids below.
+enum column_id { COL_PERFORM_CHN, COL_PERFORM_VOL, COL_PERFORM_ATK, COL_PERFORM_REL, COL_TRANSPOSE_L, COL_CCS, COL_CCM, COL_CCT, COL_CHANNEL, COL_TRANSPOSE_R, COL_EXPLORE };
 
 static const uint16_t column_layer_keys[][6] PROGMEM = {
-    [COL_PERFORM]     = {MI_LEG,  MI_CHNU, MI_CHND, MI_BNDU, MI_BNDD, MI_SUST},
+    [COL_PERFORM_CHN] = {MI_LEG,  MI_CHNU, MI_CHND, MI_BNDU, MI_BNDD, MI_SUST},
+    [COL_PERFORM_VOL] = {MI_LEG,  MI_VOLU, MI_VOLD, MI_BNDU, MI_BNDD, MI_SUST},
+    [COL_PERFORM_ATK] = {MI_LEG,  MI_ATKU, MI_ATKD, MI_BNDU, MI_BNDD, MI_SUST},
+    [COL_PERFORM_REL] = {MI_LEG,  MI_RELU, MI_RELD, MI_BNDU, MI_BNDD, MI_SUST},
     [COL_TRANSPOSE_L] = {MI_TR0,  MI_TRX,  MI_TRSU, MI_TRSD, MI_OCTU, MI_OCTD},
     [COL_CCS]         = {MI_CCT9, MI_CCT8, MI_CCT7, MI_CCM9, MI_CCM8, MI_CCM7},
     [COL_CCM]         = {MI_CCM6, MI_CCM5, MI_CCM4, MI_CCM3, MI_CCM2, MI_CCM1},
@@ -486,7 +543,7 @@ static const uint16_t column_layer_keys[][6] PROGMEM = {
     [COL_EXPLORE]     = {MI_BNK0, MI_PC0,  MI_BNKU, MI_BNKD, MI_PCU,  MI_PCD},
 };
 
-static const uint8_t rc_column_ids[] PROGMEM = {COL_PERFORM, COL_TRANSPOSE_R, COL_CCS, COL_CCM, COL_CCT, COL_CHANNEL, COL_EXPLORE};
+static const uint8_t rc_column_ids[] PROGMEM = {COL_PERFORM_CHN, COL_TRANSPOSE_R, COL_CCS, COL_CCM, COL_CCT, COL_CHANNEL, COL_EXPLORE};
 
 // Right-hand-only layers that don’t follow a formula, stored as just their
 // 6×9 right half. Indexed by `layer - _RH_DRUM`.
@@ -527,14 +584,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX,     XXXXXXX, XXXXXXX, KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT, XXXXXXX, KC_UP,   XXXXXXX,     \
     XXXXXXX,     XXXXXXX, XXXXXXX, XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_BSPC, KC_BSPC,      KC_SPC,  KC_SPC,  KC_ENT,  XXXXXXX, XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT      \
 ),
-// | 1                | 2                | 3            | 4             | 5          | 6              | 7              | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
+// | 1                   | 2                  | 3                | 4            | 5             | 6          | 7              | 8              | 9     |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18          |
 [RAW_COMMAND] = LAYOUT( \
-    _______,           XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
-    XXXXXXX,           XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RC_PERFORM),   TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),    TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), XXXXXXX, RC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_RH_CHROMATIC), TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM),   TG(_RH_PO),  XXXXXXX,         XXXXXXX,         XXXXXXX, RH_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    DF(_LH_CHROMATIC), DF(_LH_MAJOR),     DF(_LH_MINOR), DF(_LH_GUITAR), XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
-    TG(_LC_PERFORM),   TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),    TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         XXXXXXX, LC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
+    _______,             XXXXXXX,             XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(_QWERTY),  \
+    TG(_LC_PERFORM_CHN), XXXXXXX,             XXXXXXX,           XXXXXXX,       XXXXXXX,        XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_LC_PERFORM_VOL), TG(_RC_PERFORM),     TG(_RC_TRANSPOSE), TG(_RC_CCS),   TG(_RC_CCM),    TG(_RC_CCT), TG(_RC_CHANNEL), TG(_RC_EXPLORE), RC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_LC_PERFORM_ATK), TG(_RH_CHROMATIC),   TG(_RH_MAJOR),     TG(_RH_MINOR), TG(_RH_DRUM),   TG(_RH_PO),  XXXXXXX,         XXXXXXX,         RH_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    TG(_LC_PERFORM_REL), DF(_LH_CHROMATIC),   DF(_LH_MAJOR),     DF(_LH_MINOR), DF(_LH_GUITAR), XXXXXXX,     XXXXXXX,         XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      \
+    XXXXXXX,             TG(_LC_PERFORM_CHN), TG(_LC_TRANSPOSE), TG(_LC_CCS),   TG(_LC_CCM),    TG(_LC_CCT), TG(_LC_CHANNEL), XXXXXXX,         LC_CLR,       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, OSL(_CONTROL) \
 ),
 // | 1      | 2      | 3      | 4      | 5      | 6      | 7      | 8      | 9      |||||| 10     | 11     | 12     | 13     | 14     | 15     | 16     | 17     | 18     |
 [RAW_CONTROL] = LAYOUT( \
@@ -565,11 +622,11 @@ uint16_t keymap_key_to_keycode(uint8_t layer, keypos_t key) {
         case _RH_DRUM:
         case _RH_PO:
             return right_half ? pgm_read_word(&rh_grids[layer - _RH_DRUM][vrow][key.col]) : KC_TRNS;
-        case _LC_PERFORM ... _LC_CHANNEL:
+        case _LC_PERFORM_CHN ... _LC_CHANNEL:
             if (right_half || key.col != 0) {
                 return KC_TRNS;
             }
-            return pgm_read_word(&column_layer_keys[layer - _LC_PERFORM][vrow]);
+            return pgm_read_word(&column_layer_keys[layer - _LC_PERFORM_CHN][vrow]);
         case _RC_PERFORM ... _RC_EXPLORE:
             if (!right_half || key.col != MATRIX_COLS - 1) {
                 return KC_TRNS;
